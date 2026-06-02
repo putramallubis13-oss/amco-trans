@@ -113,6 +113,7 @@ select.fi{appearance:none}
 .atab.active{background:var(--pr);color:#fff;border:none}
 .conflict-box{background:#fdecea;border:1px solid #F09595;border-radius:7px;padding:8px 11px;margin-bottom:7px;font-size:10px;color:#a02020;display:none}
 .conflict-box.show{display:flex;align-items:flex-start;gap:6px}
+.conflict-box.info{background:#eaf4fb;border-color:#b5d4f4;color:#1a6fa0;display:flex;align-items:flex-start;gap:6px}
 .dp-summary{background:var(--pr);border-radius:9px;padding:11px 13px;margin-top:3px;margin-bottom:7px}
 .dp-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0}
 .dp-lbl{font-size:10px;color:rgba(255,255,255,.65)}
@@ -649,8 +650,56 @@ function logout(){document.getElementById('pin-screen').classList.remove('h');pi
 function gantiPin(){var l=document.getElementById('pin-lama').value,b=document.getElementById('pin-baru').value,k=document.getElementById('pin-konfirm').value;if(l!==PIN){T('PIN lama salah','err');return;}if(b.length!==4||isNaN(b)){T('PIN harus 4 digit','err');return;}if(b!==k){T('Konfirmasi tidak cocok','err');return;}PIN=b;['pin-lama','pin-baru','pin-konfirm'].forEach(function(x){document.getElementById(x).value='';});addLog('sistem','PIN diubah','','#e8a020');T('PIN berhasil diubah!');}
 
 /* ── KONFLIK ── */
-function cekKonflik(){var tgl=document.getElementById('f-tgl').value,drv=drvN(curN),box=document.getElementById('conflict-box'),btn=document.getElementById('btn-simpan');if(!tgl){box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';return;}var k=DB.filter(function(p){return p.status!=='Batal'&&p.driver===drv&&getTgl(p).indexOf(tgl)!==-1;});if(k.length){document.getElementById('conflict-msg').textContent=drv+' sudah ada: '+k.map(function(p){return p.id;}).join(', ');box.className='conflict-box show';btn.disabled=true;btn.style.opacity='0.5';}else{box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';}}
-function cekKonflikR(){var drv=document.getElementById('r-arm').value,mul=document.getElementById('r-mul').value,sel=document.getElementById('r-sel').value,box=document.getElementById('conflict-box-r'),btn=document.getElementById('btn-simpan-r');if(!mul){box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';return;}var e=sel||mul,c=new Date(mul),end=new Date(e),tl=[];while(c<=end){tl.push(c.toISOString().slice(0,10));c.setDate(c.getDate()+1);}var k=DB.filter(function(p){return p.status!=='Batal'&&p.driver===drv&&tl.some(function(t){return getTgl(p).indexOf(t)!==-1;});});if(k.length){document.getElementById('conflict-msg-r').textContent=drv+' sudah ada pesanan di tanggal tersebut';box.className='conflict-box show';btn.disabled=true;btn.style.opacity='0.5';}else{box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';}}
+function cekKonflik(){
+  var tgl=document.getElementById('f-tgl').value,drv=drvN(curN),box=document.getElementById('conflict-box'),btn=document.getElementById('btn-simpan');
+  if(!tgl){box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';return;}
+  /* Blokir hanya jika ada RENTAL driver yang sama di tanggal yang sama */
+  var rentalBentrok=DB.filter(function(p){
+    return p.status!=='Batal'&&p.tipe==='rental'&&p.driver===drv&&getTgl(p).indexOf(tgl)!==-1;
+  });
+  if(rentalBentrok.length){
+    document.getElementById('conflict-msg').textContent='Tidak bisa tambah travel — '+drv+' sudah ada rental di tanggal ini: '+rentalBentrok.map(function(p){return p.id;}).join(', ');
+    box.className='conflict-box show';btn.disabled=true;btn.style.opacity='0.5';return;
+  }
+  /* Travel + travel boleh — cek sisa kursi saja */
+  var maxKursi=curN===8?8:9;
+  var terisi=getBk(curRute,curN,null);
+  var sisa=maxKursi-terisi.length;
+  if(sisa<=0){
+    document.getElementById('conflict-msg').textContent='Semua '+maxKursi+' kursi Hiace '+(curN===8?'8':'9')+' sudah penuh di tanggal & rute ini.';
+    box.className='conflict-box show';btn.disabled=true;btn.style.opacity='0.5';
+  }else{
+    var pesAda=DB.filter(function(p){return p.status!=='Batal'&&p.tipe==='travel'&&p.driver===drv&&p.tgl===tgl;});
+    if(pesAda.length){
+      document.getElementById('conflict-msg').textContent='Info: Sudah ada '+pesAda.length+' pesanan travel. Sisa '+sisa+' kursi kosong — silakan pilih kursi yang masih tersedia.';
+      box.className='conflict-box info';btn.disabled=false;btn.style.opacity='1';
+    }else{
+      box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';
+    }
+  }
+}
+function cekKonflikR(){
+  var drv=document.getElementById('r-arm').value,mul=document.getElementById('r-mul').value,sel=document.getElementById('r-sel').value;
+  var box=document.getElementById('conflict-box-r'),btn=document.getElementById('btn-simpan-r');
+  if(!mul){box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';return;}
+  var e=sel||mul,c=new Date(mul),end=new Date(e),tl=[];
+  while(c<=end){tl.push(c.toISOString().slice(0,10));c.setDate(c.getDate()+1);}
+  /* Blokir jika ada travel ATAU rental driver yang sama di tanggal overlap */
+  var k=DB.filter(function(p){
+    return p.status!=='Batal'&&p.driver===drv&&tl.some(function(t){return getTgl(p).indexOf(t)!==-1;});
+  });
+  if(k.length){
+    var tvList=k.filter(function(p){return p.tipe==='travel';});
+    var rtList=k.filter(function(p){return p.tipe==='rental';});
+    var msg='Tidak bisa tambah rental — '+drv+' sudah ada: ';
+    if(tvList.length)msg+='Travel ('+tvList.map(function(p){return p.id;}).join(', ')+') ';
+    if(rtList.length)msg+='Rental ('+rtList.map(function(p){return p.id;}).join(', ')+')';
+    document.getElementById('conflict-msg-r').textContent=msg;
+    box.className='conflict-box show';btn.disabled=true;btn.style.opacity='0.5';
+  }else{
+    box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';
+  }
+}
 
 /* ── SEAT PICKER ── */
 function mkS(num,bk,sv,pv,onT){var e=document.createElement('div');e.className='s'+(sv?' sel':bk?' bkd':'');e.textContent=num;if(!bk)e.addEventListener('click',function(){onT(num);});return e;}
@@ -659,7 +708,20 @@ function mkRow(cells){var r=document.createElement('div');r.className='srow';cel
 function mkG(){var d=document.createElement('div');d.className='sgap';return d;}
 function mkA(){var d=document.createElement('div');d.className='saisle';return d;}
 function drawSeats(gId,n,bk,sel,prev,onT){var g=document.getElementById(gId);if(!g)return;g.innerHTML='';function S(num){var b=bk.indexOf(num)!==-1,s=sel.indexOf(num)!==-1;return mkS(num,b,s,false,onT);}function D(n1,n2){var b1=bk.indexOf(n1)!==-1,b2=bk.indexOf(n2)!==-1,s1=sel.indexOf(n1)!==-1,s2=sel.indexOf(n2)!==-1;return mkD(n1,n2,b1,b2,s1,s2,false,false,onT);}if(n===8){g.appendChild(mkRow([S(1),mkG()]));g.appendChild(mkRow([S(2),S(3),mkA(),mkG()]));g.appendChild(mkRow([S(4),S(5),mkA(),mkG()]));g.appendChild(mkRow([S(6),S(7),S(8)]));}else{g.appendChild(mkRow([S(1),mkG()]));g.appendChild(mkRow([S(2),S(3),mkA(),mkG()]));g.appendChild(mkRow([D(5,6),mkA(),S(4)]));g.appendChild(mkRow([S(7),S(8),S(9)]));}}
-function getBk(rute,armN,skip){var r=[];DB.forEach(function(p){if(p.id===skip||p.status==='Batal'||p.tipe==='rental')return;if(p.rute===rute&&p.armadaN===armN&&p.seats)p.seats.forEach(function(s){r.push(s);});});return r;}
+function getBk(rute,armN,skip){
+  var tgl=document.getElementById('f-tgl')?document.getElementById('f-tgl').value:'';
+  var r=[];
+  DB.forEach(function(p){
+    if(p.id===skip||p.status==='Batal'||p.tipe==='rental')return;
+    if(p.armadaN===armN&&p.seats){
+      /* Hanya blokir kursi di tanggal & rute yang sama */
+      if(tgl&&p.tgl===tgl&&p.rute===rute){
+        p.seats.forEach(function(s){r.push(s);});
+      }
+    }
+  });
+  return r;
+}
 function togFS(num){var i=selS.indexOf(num);if(i===-1)selS.push(num);else selS.splice(i,1);selS.sort(function(a,b){return a-b;});redrawFS();hitF();}
 function redrawFS(){drawSeats('sg',curN,getBk(curRute,curN,null),selS,[],togFS);var n=selS.length;document.getElementById('sp-cnt').textContent=n+' dipilih';var ss=document.getElementById('ssel');if(n>0){ss.style.display='flex';document.getElementById('ssel-t').textContent='Kursi '+selS.join(', ');document.getElementById('ssel-c').textContent=n;}else ss.style.display='none';}
 function swArm(n){curN=n;selS=[];document.getElementById('at8').className='atab'+(n===8?' active':'');document.getElementById('at9').className='atab'+(n===9?' active':'');document.getElementById('sp-title').textContent=n===8?'Hiace 8 - Zakaria':'Hiace 9 - Rahmat';redrawFS();hitF();cekKonflik();}
@@ -672,7 +734,12 @@ function hitR(){var h=parseInt(document.getElementById('r-hrg').value)||0,m=docu
 /* ── SIMPAN PESANAN ── */
 async function simpan(){
   var nama=document.getElementById('f-nama').value.trim(),tgl=document.getElementById('f-tgl').value;
-  if(!nama||!tgl||!selS.length||document.getElementById('btn-simpan').disabled){T('Lengkapi form','err');return;}
+  if(!nama||!tgl||!selS.length){T('Lengkapi form','err');return;}
+  /* Cek kursi tidak bentrok dengan pesanan lain */
+  var terisi=getBk(curRute,curN,null);
+  var bentrok=selS.filter(function(s){return terisi.indexOf(s)!==-1;});
+  if(bentrok.length){T('Kursi '+bentrok.join(', ')+' sudah terisi','err');return;}
+  if(document.getElementById('btn-simpan').disabled){T('Semua kursi penuh','err');return;}
   var p=document.getElementById('f-rute').value.split('|'),dir=p[2];
   var jadwal=(dir==='lp'||dir==='pl')?document.getElementById('f-jadwal').value:'';
   var x=fBdr?20000:0,dis=fMhs?DIS_MHS*selS.length:0,tarif=curTarif+x-(fMhs?DIS_MHS:0),tot=tarif*selS.length;
