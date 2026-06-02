@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>HAMCO TRANS — APK Utama</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--pr:#1a3a5c;--ac:#e8a020;--bg:#f4f6fa;--cd:#fff;--tx:#1a2233;--mt:#6b7a99;--bd:rgba(26,58,92,0.12);--sc:#27ae60;--dn:#e74c3c;--warn:#f39c12}
+body{background:var(--bg);font-family:'Segoe UI',sans-serif;font-size:13px;min-height:100vh;display:flex;justify-content:center}
+.frame{width:100%;max-width:430px;background:var(--bg);min-height:100vh;position:relative}
+.pin-screen{position:fixed;inset:0;background:var(--pr);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;padding:24px}
+.pin-screen.h{display:none}
+.pin-logo{background:var(--ac);color:var(--pr);font-weight:800;font-size:20px;border-radius:10px;padding:8px 18px;margin-bottom:8px}
+.pin-dots{display:flex;gap:14px;margin-bottom:22px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.4);transition:all .2s}
+.pin-dot.filled{background:var(--ac);border-color:var(--ac)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:220px}
+.pin-btn{height:56px;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;font-size:20px;font-weight:600;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pin-btn:active{background:rgba(255,255,255,.3)}
+.pin-err{color:var(--dn);font-size:11px;margin-top:8px;min-height:16px;text-align:center}
+.topbar{background:var(--pr);color:#fff;padding:12px 14px 9px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo-box{background:var(--ac);color:var(--pr);font-weight:700;font-size:12px;border-radius:6px;padding:3px 8px}
+.sync-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:500}
+.sync-badge.ok{color:#2ecc71}.sync-badge.syncing{color:var(--warn)}.sync-badge.error{color:var(--dn)}
+.tabs{display:flex;background:var(--pr);overflow-x:auto;position:sticky;top:52px;z-index:99}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;text-align:center;padding:7px 9px 6px;font-size:8px;color:rgba(255,255,255,.5);cursor:pointer;border-bottom:2px solid transparent;display:flex;flex-direction:column;align-items:center;gap:1px;white-space:nowrap}
+.tab i{font-size:13px}
+.tab.active{color:var(--ac);border-bottom:2px solid var(--ac)}
+.pg{display:none;padding:12px;padding-bottom:80px}
+.pg.active{display:block}
+.sec{font-size:10px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;margin-top:12px}
+.sec:first-child{margin-top:0}
+.card{background:var(--cd);border-radius:12px;border:.5px solid var(--bd);padding:12px 13px;margin-bottom:8px}
+.banner{background:var(--pr);border-radius:12px;padding:13px;color:#fff;margin-bottom:10px}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:10px}
+.st{background:var(--cd);border-radius:9px;padding:9px 11px;border:.5px solid var(--bd)}
+.slbl{font-size:10px;color:var(--mt);margin-bottom:2px}
+.sv{font-size:15px;font-weight:700}
+.sv.g{color:var(--sc)}.sv.a{color:var(--ac)}.sv.b{color:#2980b9}.sv.r{color:var(--dn)}
+.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:10px}
+.qb{background:var(--cd);border:.5px solid var(--bd);border-radius:9px;padding:9px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+.qi{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.ql{font-size:10px;font-weight:500;color:var(--tx)}
+.fi{border:.5px solid var(--bd);border-radius:7px;padding:8px 10px;font-size:12px;background:var(--cd);color:var(--tx);width:100%}
+.fi:focus{outline:none;border-color:var(--pr)}
+select.fi{appearance:none}
+.fg{display:flex;flex-direction:column;gap:3px;margin-bottom:7px}
+.fl{font-size:11px;font-weight:500;color:var(--mt)}
+.btn-pr{width:100%;background:var(--pr);color:#fff;border:none;border-radius:9px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;margin-top:3px}
+.btn-ac{width:100%;background:var(--ac);color:var(--pr);border:none;border-radius:9px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;margin-top:3px}
+.btn-dn{width:100%;background:var(--dn);color:#fff;border:none;border-radius:9px;padding:9px;font-size:11px;font-weight:600;cursor:pointer;margin-top:5px}
+.tbtn-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.tbtn{padding:8px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;text-align:center;border:.5px solid var(--bd);background:var(--cd);color:var(--mt)}
+.tbtn.active{background:var(--pr);color:#fff;border:none}
+.pcard{background:var(--cd);border:.5px solid var(--bd);border-radius:11px;padding:11px 12px;margin-bottom:7px}
+.pcard-head{display:flex;align-items:flex-start;gap:9px;margin-bottom:7px}
+.pcard-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.ico-b{background:#eaf4fb}.ico-g{background:#eafaf1}.ico-w{background:#fef9e7}
+.pcard-htxt{flex:1;min-width:0}
+.pcard-id{font-size:10px;font-weight:600;color:var(--mt)}
+.pcard-rute{font-size:11px;font-weight:700;color:var(--tx);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard-badge{display:inline-block;font-size:9px;font-weight:600;padding:2px 6px;border-radius:20px;margin-top:2px}
+.badge-tv{background:#eaf4fb;color:#1a6fa0}.badge-rt{background:#eafaf1;color:#1e7e44}.badge-mhs{background:#f3e8ff;color:#6b21a8}
+.pcard-right{text-align:right;flex-shrink:0}
+.pcard-price{font-size:11px;font-weight:700;color:var(--pr)}
+.pill{font-size:8px;padding:2px 6px;border-radius:20px;display:inline-block;font-weight:500;margin-top:2px}
+.p-j{background:#eafaf1;color:#1e7e44}.p-s{background:#eaf4fb;color:#1a6fa0}.p-p{background:#fef9e7;color:#9a6b0a}.p-b{background:#fdecea;color:#a02020}
+.pcard-rows{display:flex;flex-direction:column;gap:3px;margin-bottom:6px}
+.prow{display:flex;align-items:center;gap:6px;font-size:10px}
+.prow i{font-size:11px;color:var(--mt);flex-shrink:0;width:13px;text-align:center}
+.prow-v{color:var(--tx);font-weight:500;flex:1}
+.pcard-divider{height:.5px;background:var(--bd);margin:5px 0}
+.pcard-chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px}
+.chip{display:inline-flex;align-items:center;gap:3px;background:#eaf4fb;border:.5px solid #b5d4f4;border-radius:20px;padding:2px 9px;font-size:10px;color:#1a6fa0;cursor:pointer;font-weight:500}
+.pcard-actions{display:flex;flex-wrap:wrap;gap:4px}
+.abtn{font-size:8px;padding:2px 8px;border-radius:20px;border:.5px solid var(--bd);background:var(--cd);cursor:pointer;font-weight:500}
+.abtn-e{color:var(--pr)}.abtn-j{color:#1e7e44}.abtn-s{color:#1a6fa0}
+.filter-box{background:var(--cd);border-radius:9px;border:.5px solid var(--bd);padding:9px 11px;margin-bottom:9px}
+.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.filter-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px}
+.fbtn{font-size:8px;padding:3px 9px;border-radius:20px;cursor:pointer;border:.5px solid var(--bd);background:var(--cd);color:var(--mt);font-weight:500}
+.fbtn.active{background:var(--pr);color:#fff;border-color:var(--pr)}
+.sp{background:var(--cd);border:.5px solid var(--bd);border-radius:11px;padding:11px;margin-bottom:7px}
+.sph{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.bus{background:#f8f9fc;border:1.5px solid var(--bd);border-radius:11px;padding:9px}
+.bus-front{display:flex;align-items:center;justify-content:space-between;padding-bottom:7px;margin-bottom:7px;border-bottom:1px dashed var(--bd)}
+.wheel{width:24px;height:24px;background:var(--pr);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.srows{display:flex;flex-direction:column;gap:5px}
+.srow{display:flex;align-items:center;gap:5px}
+.sgap{flex:1}.saisle{width:12px;flex-shrink:0}
+.s{width:37px;height:37px;border-radius:7px;border:1.5px solid #b5d4f4;background:#eaf4fb;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:12px;font-weight:700;color:#1a6fa0;user-select:none}
+.s:hover{border-color:var(--pr);background:#d4e8f8}
+.s.sel{background:var(--pr);border-color:var(--pr);color:#fff}
+.s.bkd{background:#fdecea;border-color:#F09595;color:#a02020;cursor:not-allowed;pointer-events:none}
+.sdbl{height:37px;border-radius:7px;border:1.5px solid #b5d4f4;background:#eaf4fb;display:flex;align-items:stretch;cursor:pointer;flex-shrink:0;overflow:hidden}
+.sdbl:hover{border-color:var(--pr);background:#d4e8f8}
+.sdbl.sel{background:var(--pr);border-color:var(--pr)}
+.sdbl.bkd{background:#fdecea;border-color:#F09595;cursor:not-allowed;pointer-events:none}
+.sh{width:37px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1a6fa0;flex-shrink:0;pointer-events:none}
+.sdbl.sel .sh{color:#fff}.sdbl.bkd .sh{color:#a02020}
+.sdv{width:1px;background:rgba(26,58,92,.15);pointer-events:none}
+.sdbl.sel .sdv{background:rgba(255,255,255,.25)}
+.sleg{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+.sleg-i{display:flex;align-items:center;gap:3px;font-size:9px;color:var(--mt)}
+.sleg-b{width:11px;height:11px;border-radius:3px;border:1.5px solid}
+.ssel{background:var(--pr);border-radius:7px;padding:7px 11px;margin-top:7px;display:flex;align-items:center;justify-content:space-between}
+.atabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:9px}
+.atab{padding:7px 6px;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer;text-align:center;border:.5px solid var(--bd);background:var(--cd);color:var(--mt);line-height:1.3}
+.atab.active{background:var(--pr);color:#fff;border:none}
+.conflict-box{background:#fdecea;border:1px solid #F09595;border-radius:7px;padding:8px 11px;margin-bottom:7px;font-size:10px;color:#a02020;display:none}
+.conflict-box.show{display:flex;align-items:flex-start;gap:6px}
+.dp-summary{background:var(--pr);border-radius:9px;padding:11px 13px;margin-top:3px;margin-bottom:7px}
+.dp-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0}
+.dp-lbl{font-size:10px;color:rgba(255,255,255,.65)}
+.dp-val{font-size:11px;font-weight:600;color:#fff}
+.dp-divider{height:.5px;background:rgba(255,255,255,.15);margin:5px 0}
+.dp-lbl-t{font-size:10px;color:var(--ac);font-weight:600}
+.dp-val-t{font-size:14px;font-weight:700;color:var(--ac)}
+.harga-prev{background:var(--pr);border-radius:9px;padding:11px 13px;margin-bottom:7px}
+.hp-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0}
+.hp-lbl{font-size:10px;color:rgba(255,255,255,.65)}
+.hp-val{font-size:11px;font-weight:600;color:#fff}
+.hp-div{height:.5px;background:rgba(255,255,255,.15);margin:4px 0}
+.tgl-wrap{display:flex;align-items:center;justify-content:space-between;padding:5px 0}
+.tgl-btn{width:36px;height:20px;border-radius:10px;background:#ddd;cursor:pointer;position:relative;border:none;flex-shrink:0;transition:background .2s}
+.tgl-btn.on{background:var(--ac)}
+.tgl-btn::after{content:'';width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:left .2s}
+.tgl-btn.on::after{left:18px}
+.rekon-card{background:var(--cd);border:.5px solid var(--bd);border-radius:11px;overflow:hidden;margin-bottom:7px}
+.rekon-head{background:var(--pr);padding:8px 12px;display:flex;justify-content:space-between;align-items:center}
+.rekon-tgl{font-size:11px;font-weight:600;color:#fff}
+.rs-pill{font-size:8px;font-weight:700;padding:2px 7px;border-radius:20px}
+.rs-ok{background:#2ecc71;color:#fff}.rs-lebih{background:var(--ac);color:var(--pr)}.rs-kurang{background:var(--dn);color:#fff}.rs-belum{background:rgba(255,255,255,.2);color:rgba(255,255,255,.8)}
+.rekon-body{padding:10px 12px}
+.rd{font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;display:inline-block}
+.rd-ok{background:#eafaf1;color:#1e7e44}.rd-lebih{background:#fef9e7;color:#9a6b0a}.rd-kurang{background:#fdecea;color:#a02020}.rd-belum{background:#eaf4fb;color:#1a6fa0}
+.pm{background:#f4f6fa;border-radius:7px;padding:7px 9px;margin-top:4px}
+.pm-item{display:flex;justify-content:space-between;font-size:10px;padding:2px 0;border-bottom:.5px solid var(--bd)}
+.pm-item:last-child{border-bottom:none}
+.drv-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.av-b{background:#eaf4fb;color:#1a6fa0}.av-g{background:#eafaf1;color:#1e7e44}
+.row-sb{display:flex;justify-content:space-between;align-items:center;padding:2px 0}
+.rl{font-size:10px;color:var(--mt)}.rv{font-size:11px;font-weight:600;color:var(--tx)}
+.divider{height:.5px;background:var(--bd);margin:7px 0}
+.gaji-card{background:var(--cd);border:.5px solid var(--bd);border-radius:11px;padding:12px 13px;margin-bottom:8px}
+.gaji-head{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.gaji-badge{font-size:8px;font-weight:700;padding:2px 7px;border-radius:20px}
+.g-lunas{background:#eafaf1;color:#1e7e44}.g-belum{background:#fdecea;color:#a02020}.g-sebagian{background:#fef9e7;color:#9a6b0a}
+.fee-box{background:#eafaf1;border:.5px solid #a9dfbf;border-radius:9px;padding:10px 12px;margin:6px 0}
+.fee-title{font-size:10px;font-weight:600;color:#1e7e44;margin-bottom:5px}
+.fee-item{display:flex;justify-content:space-between;font-size:10px;padding:2px 0}
+.fee-total{display:flex;justify-content:space-between;font-size:11px;font-weight:700;padding-top:5px;margin-top:3px;border-top:.5px solid #a9dfbf;color:#1e7e44}
+.gaji-rw{background:#f4f6fa;border-radius:7px;padding:7px 9px;margin-top:6px}
+.gaji-rw-item{display:flex;justify-content:space-between;align-items:center;font-size:10px;padding:2px 0;border-bottom:.5px solid var(--bd)}
+.gaji-rw-item:last-child{border-bottom:none}
+.laba-box{border-radius:11px;padding:13px;margin-bottom:11px}
+.laba-box.profit{background:linear-gradient(135deg,#1a7a4a,#27ae60)}
+.laba-box.loss{background:linear-gradient(135deg,#a02020,#e74c3c)}
+.laba-box.gaji-bg{background:linear-gradient(135deg,#1a3a5c,#2563a8)}
+.period-tabs{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+.ptab{padding:5px 12px;border-radius:20px;font-size:10px;font-weight:600;cursor:pointer;border:.5px solid var(--bd);background:var(--cd);color:var(--mt)}
+.ptab.active{background:var(--pr);color:#fff;border-color:var(--pr)}
+.chart-wrap{background:var(--cd);border:.5px solid var(--bd);border-radius:11px;padding:13px;margin-bottom:9px}
+.bar-area{display:flex;gap:3px;align-items:flex-end;height:65px;margin-bottom:5px}
+.bc{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.bar-stack{display:flex;flex-direction:column-reverse;gap:1px;width:100%;align-items:center}
+.bar-fill{width:100%;border-radius:3px 3px 0 0;min-height:3px}
+.bar-lbl{font-size:7px;color:var(--mt);text-align:center}
+.biaya-item{display:flex;align-items:center;gap:9px;padding:8px 11px;background:var(--cd);border-radius:9px;border:.5px solid var(--bd);margin-bottom:5px}
+.biaya-ico{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.biaya-info{flex:1;min-width:0}
+.biaya-n{font-size:11px;font-weight:600;color:var(--tx)}
+.biaya-d{font-size:10px;color:var(--mt);margin-top:1px}
+.biaya-jml{font-size:12px;font-weight:700;color:var(--dn);flex-shrink:0}
+.piutang-badge{font-size:8px;font-weight:700;padding:2px 7px;border-radius:20px}
+.jt-aman{background:#eafaf1;color:#1e7e44}.jt-dekat{background:#fef9e7;color:#9a6b0a}.jt-lewat{background:#fdecea;color:#a02020}
+.log-item{display:flex;gap:8px;padding:7px 0;border-bottom:.5px solid var(--bd)}
+.log-item:last-child{border-bottom:none}
+.log-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.servis-tbl{width:100%;border-collapse:collapse;font-size:10px}
+.servis-tbl th{background:var(--bg);color:var(--mt);font-size:8px;font-weight:600;text-transform:uppercase;padding:7px;text-align:left;border-bottom:.5px solid var(--bd);white-space:nowrap}
+.servis-tbl td{padding:7px 6px;border-bottom:.5px solid var(--bd);vertical-align:middle}
+.servis-tbl tr:last-child td{border-bottom:none}
+.servis-tbl tr.r-due{background:#fff5f5}
+.servis-tbl tr.r-warn{background:#fffbf0}
+.sdot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.sdot-ok{background:var(--sc)}.sdot-warn{background:var(--warn)}.sdot-due{background:var(--dn)}.sdot-na{background:#ccc}
+.sspill{font-size:8px;font-weight:600;padding:2px 5px;border-radius:8px;white-space:nowrap}
+.ss-ok{background:#eafaf1;color:#1e7e44}.ss-warn{background:#fef9e7;color:#9a6b0a}.ss-due{background:#fdecea;color:#a02020}.ss-na{background:#f0f2f6;color:var(--mt)}
+.btn-sc{font-size:8px;padding:2px 7px;border-radius:5px;border:.5px solid var(--pr);background:var(--cd);color:var(--pr);cursor:pointer;font-weight:600;white-space:nowrap}
+.kat-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:9px}
+.ktab{font-size:8px;padding:3px 9px;border-radius:20px;cursor:pointer;border:.5px solid var(--bd);background:var(--cd);color:var(--mt);font-weight:500}
+.ktab.active{background:var(--pr);color:#fff;border-color:var(--pr)}
+.kosong{text-align:center;padding:22px 12px;color:var(--mt)}
+.kosong i{font-size:32px;display:block;margin-bottom:8px;opacity:.3}
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.moverlay.h{display:none}
+.modal{background:var(--cd);border-radius:16px 16px 0 0;padding:15px 13px 22px;width:100%;max-width:430px;max-height:90vh;overflow-y:auto}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:#fff;padding:8px 16px;border-radius:30px;font-size:11px;font-weight:500;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div id="pin-screen" class="pin-screen">
+  <div class="pin-logo">HT</div>
+  <div style="color:#fff;font-size:14px;font-weight:600;margin-bottom:3px">HAMCO TRANS</div>
+  <div style="color:rgba(255,255,255,.55);font-size:10px;margin-bottom:22px">Sistem Manajemen Internal</div>
+  <div class="pin-dots"><div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div><div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div></div>
+  <div class="pin-pad">
+    <button class="pin-btn" onclick="pinI('1')">1</button><button class="pin-btn" onclick="pinI('2')">2</button><button class="pin-btn" onclick="pinI('3')">3</button>
+    <button class="pin-btn" onclick="pinI('4')">4</button><button class="pin-btn" onclick="pinI('5')">5</button><button class="pin-btn" onclick="pinI('6')">6</button>
+    <button class="pin-btn" onclick="pinI('7')">7</button><button class="pin-btn" onclick="pinI('8')">8</button><button class="pin-btn" onclick="pinI('9')">9</button>
+    <button class="pin-btn" onclick="pinI('0')">0</button>
+    <button class="pin-btn" onclick="pinD()"><i class="ti ti-backspace"></i></button>
+  </div>
+  <div class="pin-err" id="pin-err"></div>
+  <div style="color:rgba(255,255,255,.35);font-size:10px;margin-top:12px">PIN default: 1234</div>
+</div>
+<div class="frame">
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:7px">
+    <div class="logo-box">HT</div>
+    <div><div style="font-size:13px;font-weight:600">HAMCO TRANS</div>
+    <div style="display:flex;align-items:center;gap:5px"><div style="font-size:9px;opacity:.6">Manajemen</div><span id="sync-status" class="sync-badge syncing"><i class="ti ti-cloud-upload" style="font-size:10px"></i>Menghubungkan...</span></div></div>
+  </div>
+  <button onclick="logout()" style="background:rgba(255,255,255,.1);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer"><i class="ti ti-logout" style="font-size:13px;color:#fff"></i></button>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="SW('dashboard',this)"><i class="ti ti-layout-dashboard"></i>Beranda</div>
+  <div class="tab" onclick="SW('pesanan',this)"><i class="ti ti-list-check"></i>Pesanan</div>
+  <div class="tab" onclick="SW('tambah',this)"><i class="ti ti-plus"></i>Tambah</div>
+  <div class="tab" onclick="SW('setoran',this)"><i class="ti ti-cash"></i>Setoran</div>
+  <div class="tab" onclick="SW('laporan',this)"><i class="ti ti-chart-bar"></i>Laporan</div>
+  <div class="tab" onclick="SW('armada',this)"><i class="ti ti-bus"></i>Armada</div>
+  <div class="tab" onclick="SW('gaji',this)"><i class="ti ti-wallet"></i>Gaji</div>
+  <div class="tab" onclick="SW('kontrol',this)"><i class="ti ti-shield-check"></i>Kontrol</div>
+</div>
+<!-- DASHBOARD -->
+<div id="pg-dashboard" class="pg active">
+  <div class="banner">
+    <div style="font-size:9px;opacity:.7">Total Pendapatan Bulan Ini</div>
+    <div style="font-size:22px;font-weight:700;color:var(--ac);margin:3px 0 2px" id="db-tot">Rp 0</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:3px">
+      <div><div style="font-size:8px;opacity:.7">Zakaria</div><div style="font-size:10px;font-weight:700;color:var(--ac)" id="db-zak">Rp 0</div></div>
+      <div><div style="font-size:8px;opacity:.7">Rahmat</div><div style="font-size:10px;font-weight:700;color:#2ecc71" id="db-rah">Rp 0</div></div>
+      <div><div style="font-size:8px;opacity:.7">Laba Bersih</div><div style="font-size:10px;font-weight:700;color:#2ecc71" id="db-laba">Rp 0</div></div>
+    </div>
+  </div>
+  <div class="sg">
+    <div class="st"><div class="slbl">Pesanan Aktif</div><div class="sv a" id="db-aktif">0</div></div>
+    <div class="st"><div class="slbl">Setoran Masuk</div><div class="sv g" id="db-setor-j">Rp 0</div></div>
+    <div class="st"><div class="slbl">Total Fee Driver</div><div class="sv b" id="db-fee">Rp 0</div></div>
+    <div class="st"><div class="slbl">Piutang JT</div><div class="sv r" id="db-piutang">0</div></div>
+  </div>
+  <div class="sec">Aksi Cepat</div>
+  <div class="quick">
+    <div class="qb" onclick="SWN('tambah')"><div class="qi" style="background:#eaf4fb"><i class="ti ti-plus" style="color:#2980b9"></i></div><div class="ql">Pesanan Baru</div></div>
+    <div class="qb" onclick="SWN('laporan')"><div class="qi" style="background:#eafaf1"><i class="ti ti-chart-bar" style="color:#27ae60"></i></div><div class="ql">Laporan</div></div>
+    <div class="qb" onclick="SWN('gaji')"><div class="qi" style="background:#faeeda"><i class="ti ti-wallet" style="color:#854F0B"></i></div><div class="ql">Penggajian</div></div>
+    <div class="qb" onclick="SWN('kontrol')"><div class="qi" style="background:#fdecea"><i class="ti ti-shield-check" style="color:#e74c3c"></i></div><div class="ql">Pengendalian</div></div>
+  </div>
+  <div class="sec">Log Terbaru</div>
+  <div class="card" id="db-log"><div style="text-align:center;padding:10px;color:var(--mt);font-size:10px">Memuat...</div></div>
+</div>
+<!-- PESANAN -->
+<div id="pg-pesanan" class="pg">
+  <div class="filter-box">
+    <div class="filter-grid">
+      <div><div class="fl" style="margin-bottom:3px">Tanggal</div><input class="fi" type="date" id="fil-tgl" onchange="renderP()"></div>
+      <div><div class="fl" style="margin-bottom:3px">Driver</div><select class="fi" id="fil-drv" onchange="renderP()"><option value="">Semua</option><option value="Zakaria">Zakaria</option><option value="Rahmat Hidayat">Rahmat Hidayat</option></select></div>
+    </div>
+    <div class="filter-row" style="margin-top:7px;margin-bottom:0">
+      <div class="fbtn active" onclick="setFS('',this)">Semua</div>
+      <div class="fbtn" onclick="setFS('Menunggu',this)">Menunggu</div>
+      <div class="fbtn" onclick="setFS('Jalan',this)">Jalan</div>
+      <div class="fbtn" onclick="setFS('Selesai',this)">Selesai</div>
+      <div class="fbtn" onclick="setFS('Batal',this)">Batal</div>
+    </div>
+  </div>
+  <div id="pesanan-list"><div class="kosong"><i class="ti ti-loader"></i><div>Memuat data...</div></div></div>
+</div>
+<!-- TAMBAH -->
+<div id="pg-tambah" class="pg">
+  <div class="sec">Pesanan Baru</div>
+  <div class="tbtn-row"><div class="tbtn active" id="tb-tv" onclick="swType('travel')">Travel</div><div class="tbtn" id="tb-rt" onclick="swType('rental')">Rental</div></div>
+  <div id="f-travel">
+    <div class="fg"><div class="fl">Nama Pemesan *</div><input class="fi" id="f-nama" type="text" placeholder="Nama lengkap"></div>
+    <div class="fg"><div class="fl">No. HP *</div><input class="fi" id="f-hp" type="tel" placeholder="08xx-xxxx-xxxx"></div>
+    <div class="tgl-wrap" style="background:#f3e8ff;border:.5px solid #c084fc;border-radius:7px;padding:7px 10px;margin-bottom:7px">
+      <div style="font-size:10px;font-weight:600;color:#6b21a8"><i class="ti ti-school" style="margin-right:3px"></i>Mahasiswa — Diskon Rp 10.000/kursi</div>
+      <button class="tgl-btn" id="tg-mhs" onclick="tgMhs()"></button>
+    </div>
+    <div class="fg"><div class="fl">Rute *</div>
+      <select class="fi" id="f-rute" onchange="onRC()">
+        <option value="110000|Lubuk Sikaping - Padang|lp">Lubuk Sikaping - Padang · Rp 110.000</option>
+        <option value="110000|Padang - Lubuk Sikaping|pl">Padang - Lubuk Sikaping · Rp 110.000</option>
+        <option value="150000|Rao - Padang|x">Rao - Padang · Rp 150.000</option>
+        <option value="150000|Padang - Rao|x">Padang - Rao · Rp 150.000</option>
+        <option value="90000|Padang Panjang - Lubuk Sikaping|x">Padang Panjang - Lubuk Sikaping · Rp 90.000</option>
+        <option value="50000|Bukittinggi - Lubuk Sikaping|x">Bukittinggi - Lubuk Sikaping · Rp 50.000</option>
+      </select>
+    </div>
+    <div class="fg" id="wj"><div class="fl">Jadwal</div><select class="fi" id="f-jadwal"><option>10.00 - Pagi</option><option>17.00 - Sore</option></select></div>
+    <div class="fg"><div class="fl">Tanggal *</div><input class="fi" id="f-tgl" type="date" onchange="cekKonflik()"></div>
+    <div class="atabs">
+      <div class="atab active" id="at8" onclick="swArm(8)"><div>Hiace 8 Kursi</div><div style="font-size:8px;opacity:.75;margin-top:1px">Zakaria · AB 7845 HH</div></div>
+      <div class="atab" id="at9" onclick="swArm(9)"><div>Hiace 9 Kursi</div><div style="font-size:8px;opacity:.75;margin-top:1px">Rahmat · AB 7167 BE</div></div>
+    </div>
+    <div class="conflict-box" id="conflict-box"><i class="ti ti-alert-circle" style="font-size:14px;flex-shrink:0"></i><div id="conflict-msg"></div></div>
+    <div class="sp">
+      <div class="sph"><div style="font-size:11px;font-weight:600" id="sp-title">Hiace 8 - Zakaria</div><div style="font-size:9px;color:var(--mt)" id="sp-cnt">0 dipilih</div></div>
+      <div class="bus">
+        <div class="bus-front"><div style="font-size:8px;color:var(--mt);font-weight:600">DEPAN</div><div class="wheel"><i class="ti ti-steering-wheel" style="font-size:12px;color:#fff"></i></div></div>
+        <div class="srows" id="sg"></div>
+        <div class="sleg"><div class="sleg-i"><div class="sleg-b" style="background:#eaf4fb;border-color:#b5d4f4"></div>Tersedia</div><div class="sleg-i"><div class="sleg-b" style="background:var(--pr);border-color:var(--pr)"></div>Dipilih</div><div class="sleg-i"><div class="sleg-b" style="background:#fdecea;border-color:#F09595"></div>Terisi</div></div>
+      </div>
+      <div class="ssel" id="ssel" style="display:none"><div><div style="font-size:9px;color:rgba(255,255,255,.7)">Kursi</div><div style="font-size:11px;font-weight:700;color:var(--ac)" id="ssel-t">-</div></div><div style="text-align:right"><div style="font-size:9px;color:rgba(255,255,255,.7)">Jml</div><div style="font-size:11px;font-weight:700;color:var(--ac)" id="ssel-c">0</div></div></div>
+    </div>
+    <div class="tgl-wrap" style="background:var(--cd);border:.5px solid var(--bd);border-radius:7px;padding:6px 9px;margin-bottom:7px">
+      <span style="font-size:10px;font-weight:500"><i class="ti ti-plane" style="margin-right:2px"></i>Bandara (+Rp 20rb/pnp)</span>
+      <button class="tgl-btn" id="tgf" onclick="tgF()"></button>
+    </div>
+    <div class="harga-prev" id="harga-prev" style="display:none">
+      <div class="hp-row"><span class="hp-lbl">Tarif dasar</span><span class="hp-val" id="hp-dasar">-</span></div>
+      <div class="hp-row" id="hp-bdr-row" style="display:none"><span class="hp-lbl">+Bandara</span><span class="hp-val">+Rp 20.000/pnp</span></div>
+      <div class="hp-row" id="hp-dis-row" style="display:none"><span class="hp-lbl" style="color:#c084fc">-Diskon Mhs</span><span class="hp-val" style="color:#c084fc" id="hp-dis">-</span></div>
+      <div class="hp-div"></div>
+      <div class="hp-row"><span style="font-size:10px;color:var(--ac);font-weight:600">Total</span><span style="font-size:14px;font-weight:700;color:var(--ac)" id="hp-total">-</span></div>
+    </div>
+    <div class="fg"><div class="fl">Catatan</div><textarea class="fi" id="f-cat" rows="2" placeholder="Catatan..."></textarea></div>
+    <button class="btn-pr" id="btn-simpan" onclick="simpan()">Simpan Pesanan</button>
+  </div>
+  <div id="f-rental" style="display:none">
+    <div class="fg"><div class="fl">Nama Penyewa *</div><input class="fi" id="r-nama" type="text" placeholder="Nama lengkap"></div>
+    <div class="fg"><div class="fl">No. HP</div><input class="fi" id="r-hp" type="tel" placeholder="08xx"></div>
+    <div class="fg"><div class="fl">Armada</div><select class="fi" id="r-arm" onchange="cekKonflikR()"><option value="Zakaria">Hiace 8 - Zakaria (AB 7845 HH)</option><option value="Rahmat Hidayat">Hiace 9 - Rahmat (AB 7167 BE)</option></select></div>
+    <div class="fg"><div class="fl">Tanggal Mulai *</div><input class="fi" id="r-mul" type="date" onchange="cekKonflikR();hitR()"></div>
+    <div class="fg"><div class="fl">Tanggal Selesai *</div><input class="fi" id="r-sel" type="date" onchange="cekKonflikR();hitR()"></div>
+    <div class="fg"><div class="fl">Jatuh Tempo Pelunasan</div><input class="fi" id="r-jt" type="date"></div>
+    <div class="conflict-box" id="conflict-box-r"><i class="ti ti-alert-circle" style="font-size:14px;flex-shrink:0"></i><div id="conflict-msg-r"></div></div>
+    <div class="fg"><div class="fl">Tipe Rental</div><select class="fi" id="r-tip"><option>Dengan Driver</option><option>Lepas Kunci</option></select></div>
+    <div class="fg"><div class="fl">Harga per Hari (Rp) *</div><input class="fi" id="r-hrg" type="number" oninput="hitR()"></div>
+    <div class="fg"><div class="fl">DP (Rp)</div><input class="fi" id="r-dp" type="number" oninput="hitR()"></div>
+    <div class="dp-summary" id="r-summary" style="display:none">
+      <div class="dp-row"><span class="dp-lbl">Durasi</span><span class="dp-val" id="r-s-hari">-</span></div>
+      <div class="dp-row"><span class="dp-lbl">Total</span><span class="dp-val" id="r-s-total">-</span></div>
+      <div class="dp-row"><span class="dp-lbl">DP</span><span class="dp-val" style="color:var(--ac)" id="r-s-dp">-</span></div>
+      <div class="dp-divider"></div>
+      <div class="dp-row"><span class="dp-lbl-t">Sisa Bayar</span><span class="dp-val-t" id="r-s-sisa">-</span></div>
+    </div>
+    <div class="fg"><div class="fl">Catatan</div><textarea class="fi" id="r-cat" rows="2"></textarea></div>
+    <button class="btn-ac" id="btn-simpan-r" onclick="simpanR()">Simpan Rental</button>
+  </div>
+</div>
+<!-- SETORAN -->
+<div id="pg-setoran" class="pg">
+  <div style="background:#eaf4fb;border:.5px solid #b5d4f4;border-radius:9px;padding:9px 11px;margin-bottom:10px;font-size:10px;color:#1a3a5c;line-height:1.5"><strong>Konfirmasi setoran</strong> dari APK Driver. Fee driver dihitung otomatis saat dikonfirmasi.</div>
+  <div class="filter-box" style="margin-bottom:9px">
+    <div class="filter-grid">
+      <div><div class="fl" style="margin-bottom:3px">Bulan</div><input class="fi" type="month" id="rek-bln" onchange="renderRekon()"></div>
+      <div><div class="fl" style="margin-bottom:3px">Driver</div><select class="fi" id="rek-drv" onchange="renderRekon()"><option value="">Semua</option><option value="Zakaria">Zakaria</option><option value="Rahmat Hidayat">Rahmat Hidayat</option></select></div>
+    </div>
+  </div>
+  <div id="rekon-list"></div>
+  <div style="background:#f4f6fa;border:1px dashed var(--bd);border-radius:9px;padding:11px;margin-top:5px">
+    <div style="font-size:9px;font-weight:600;color:var(--mt);margin-bottom:7px;text-transform:uppercase">Input Setoran Manual</div>
+    <div class="fg"><div class="fl">Driver</div><select class="fi" id="sim-drv"><option value="Zakaria">Zakaria</option><option value="Rahmat Hidayat">Rahmat Hidayat</option></select></div>
+    <div class="fg"><div class="fl">Tanggal</div><input class="fi" type="date" id="sim-tgl"></div>
+    <div class="fg"><div class="fl">Jumlah (Rp)</div><input class="fi" type="number" id="sim-jml"></div>
+    <div class="fg"><div class="fl">Keterangan</div><input class="fi" type="text" id="sim-ket" placeholder="Keterangan"></div>
+    <button class="btn-pr" onclick="simpanSetorSim()">Terima Setoran</button>
+  </div>
+</div>
+<!-- LAPORAN -->
+<div id="pg-laporan" class="pg">
+  <div class="period-tabs">
+    <div class="ptab active" id="pt-bln" onclick="setPeriod('bulan',this)">Bulan Ini</div>
+    <div class="ptab" id="pt-mg" onclick="setPeriod('minggu',this)">Minggu Ini</div>
+    <div class="ptab" id="pt-all" onclick="setPeriod('semua',this)">Semua</div>
+  </div>
+  <div style="background:var(--cd);border:.5px solid var(--bd);border-radius:9px;padding:9px 12px;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between">
+    <div><div style="font-size:11px;font-weight:600">Status Laporan</div><div style="font-size:9px;color:var(--mt);margin-top:1px" id="lock-lbl">Belum dikunci</div></div>
+    <button id="lock-btn" onclick="toggleLock()" style="padding:5px 11px;border-radius:7px;border:none;font-size:10px;font-weight:600;cursor:pointer;background:var(--pr);color:#fff">Kunci</button>
+  </div>
+  <div id="laba-box" class="laba-box profit" style="color:#fff">
+    <div style="font-size:9px;opacity:.8">Laba Bersih</div>
+    <div style="font-size:24px;font-weight:700;margin:3px 0" id="lap-laba">Rp 0</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">
+      <div><div style="font-size:8px;opacity:.7">Pendapatan</div><div style="font-size:11px;font-weight:700;color:#2ecc71" id="lap-total">Rp 0</div></div>
+      <div><div style="font-size:8px;opacity:.7">Pengeluaran</div><div style="font-size:11px;font-weight:700;color:#f39c12" id="lap-biaya-tot">Rp 0</div></div>
+      <div><div style="font-size:8px;opacity:.7">Setoran</div><div style="font-size:11px;font-weight:700;color:#a8d8ea" id="lap-setor">Rp 0</div></div>
+    </div>
+  </div>
+  <div style="background:var(--cd);border-radius:11px;border:.5px solid var(--bd);padding:12px;margin-bottom:9px">
+    <div style="font-size:11px;font-weight:600;margin-bottom:9px">Rekonsiliasi Kas Fisik</div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0"><span style="color:var(--mt)">Pendapatan Buku</span><span id="kas-pend" style="font-weight:600">Rp 0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0"><span style="color:var(--mt)">Setoran Dikonfirmasi</span><span id="kas-setor" style="font-weight:600;color:var(--sc)">Rp 0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0"><span style="color:var(--mt)">Total Pengeluaran</span><span id="kas-biaya" style="font-weight:600;color:var(--dn)">Rp 0</span></div>
+    <div style="height:.5px;background:var(--bd);margin:6px 0"></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0"><span style="font-weight:600">Selisih Kas</span><span id="kas-selisih" style="font-weight:700;font-size:13px">Rp 0</span></div>
+    <div style="font-size:9px;color:var(--mt);margin-top:5px" id="kas-status">-</div>
+    <div class="fg" style="margin-top:8px;margin-bottom:0"><div class="fl">Kas Fisik (Rp)</div><input class="fi" type="number" id="kas-fisik" oninput="renderKas()"></div>
+  </div>
+  <div class="sg">
+    <div class="st"><div class="slbl">Travel</div><div class="sv a" id="lap-tv">Rp 0</div></div>
+    <div class="st"><div class="slbl">Rental</div><div class="sv g" id="lap-rt">Rp 0</div></div>
+    <div class="st"><div class="slbl">Diskon Mhs</div><div class="sv b" id="lap-diskon">Rp 0</div></div>
+    <div class="st"><div class="slbl">Piutang</div><div class="sv r" id="lap-piutang">Rp 0</div></div>
+  </div>
+  <div class="sec">Grafik 7 Hari</div>
+  <div class="chart-wrap"><div class="bar-area" id="chart-bars"></div>
+    <div style="display:flex;gap:7px;font-size:9px;color:var(--mt);flex-wrap:wrap">
+      <span><span style="width:9px;height:9px;background:var(--pr);border-radius:2px;display:inline-block;margin-right:2px"></span>Travel</span>
+      <span><span style="width:9px;height:9px;background:var(--ac);border-radius:2px;display:inline-block;margin-right:2px"></span>Rental</span>
+      <span><span style="width:9px;height:9px;background:var(--sc);border-radius:2px;display:inline-block;margin-right:2px"></span>Setoran</span>
+      <span><span style="width:9px;height:9px;background:var(--dn);border-radius:2px;display:inline-block;margin-right:2px"></span>Pengeluaran</span>
+    </div>
+  </div>
+  <div class="sec">Tambah Pengeluaran</div>
+  <div style="background:var(--cd);border:.5px solid var(--bd);border-radius:11px;padding:12px;margin-bottom:10px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px">
+      <div class="fg" style="margin-bottom:0"><div class="fl">Kategori</div><select class="fi" id="b-kat"><option>BBM</option><option>Servis / Perawatan</option><option>Gaji Driver</option><option>Pajak Kendaraan</option><option>Asuransi</option><option>Kebersihan</option><option>Lain-lain</option></select></div>
+      <div class="fg" style="margin-bottom:0"><div class="fl">Tanggal</div><input class="fi" type="date" id="b-tgl"></div>
+    </div>
+    <div class="fg"><div class="fl">Nama Biaya *</div><input class="fi" id="b-nama" type="text"></div>
+    <div class="fg"><div class="fl">Jumlah (Rp) *</div><input class="fi" id="b-jml" type="number"></div>
+    <button class="btn-pr" id="btn-biaya" onclick="simpanBiaya()">Tambah Pengeluaran</button>
+  </div>
+  <div class="sec">Riwayat Pengeluaran</div>
+  <div id="biaya-list"></div>
+  <button class="btn-pr" style="margin-top:7px" onclick="exportData()">Backup & Export JSON</button>
+</div>
+<!-- ARMADA -->
+<div id="pg-armada" class="pg">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px">
+    <div class="atab active" id="srv-tab1" onclick="pilihArm(1)"><div>Hiace 8 Kursi</div><div style="font-size:8px;opacity:.75;margin-top:1px">AB 7845 HH · Zakaria</div></div>
+    <div class="atab" id="srv-tab2" onclick="pilihArm(2)"><div>Hiace 9 Kursi</div><div style="font-size:8px;opacity:.75;margin-top:1px">AB 7167 BE · Rahmat</div></div>
+  </div>
+  <div class="card">
+    <div style="font-size:10px;font-weight:600;color:var(--mt);margin-bottom:7px;text-transform:uppercase;letter-spacing:.7px">Odometer</div>
+    <div style="display:flex;gap:7px;align-items:center;margin-bottom:5px">
+      <input style="flex:1;border:1.5px solid var(--bd);border-radius:7px;padding:8px 11px;font-size:14px;font-weight:700;color:var(--pr);background:var(--cd);width:100%" type="number" id="km-in" placeholder="KM odometer" oninput="renderServis()">
+      <button onclick="saveKM()" style="padding:8px 13px;background:var(--pr);color:#fff;border:none;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer">Simpan</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--mt)"><span>Tersimpan: <strong id="km-saved" style="color:var(--pr)">-</strong></span><span id="km-time">-</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+    <div class="st"><div class="slbl">Normal</div><div class="sv g" id="srv-ok">-</div></div>
+    <div class="st"><div class="slbl">Segera</div><div class="sv a" id="srv-warn">-</div></div>
+    <div class="st"><div class="slbl">Terlambat</div><div class="sv r" id="srv-due">-</div></div>
+  </div>
+  <div class="kat-tabs">
+    <div class="ktab active" onclick="fKat('semua',this)">Semua</div>
+    <div class="ktab" onclick="fKat('Oli & Filter',this)">Oli</div>
+    <div class="ktab" onclick="fKat('Kaki-Kaki',this)">Kaki</div>
+    <div class="ktab" onclick="fKat('Pengereman',this)">Rem</div>
+    <div class="ktab" onclick="fKat('Mesin',this)">Mesin</div>
+    <div class="ktab" onclick="fKat('AC & Kebersihan',this)">AC</div>
+    <div class="ktab" onclick="fKat('Lain-Lain',this)">Lainnya</div>
+  </div>
+  <div style="overflow-x:auto;border-radius:9px;border:.5px solid var(--bd);background:var(--cd);margin-bottom:10px">
+    <table class="servis-tbl"><thead><tr><th></th><th>Komponen</th><th>Interval</th><th>KM Berikutnya</th><th>Status</th><th></th></tr></thead><tbody id="srv-tbody"></tbody></table>
+  </div>
+  <div class="sec">Piutang Rental</div>
+  <div id="piutang-list"></div>
+</div>
+<!-- GAJI -->
+<div id="pg-gaji" class="pg">
+  <div class="laba-box gaji-bg" style="color:#fff;margin-bottom:10px">
+    <div style="font-size:9px;opacity:.75">Total Gaji + Fee Bulan Ini</div>
+    <div style="font-size:22px;font-weight:700;color:var(--ac);margin:3px 0" id="gaji-total">Rp 0</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:3px">
+      <div><div style="font-size:8px;opacity:.7">Zakaria</div><div style="font-size:11px;font-weight:700" id="gaji-tot-zk">Rp 0</div></div>
+      <div><div style="font-size:8px;opacity:.7">Rahmat Hidayat</div><div style="font-size:11px;font-weight:700" id="gaji-tot-rh">Rp 0</div></div>
+    </div>
+  </div>
+  <div style="background:#eafaf1;border:.5px solid #a9dfbf;border-radius:9px;padding:9px 12px;margin-bottom:10px;font-size:10px;color:#1e7e44;line-height:1.6"><strong>Fee Otomatis:</strong> Travel Rp 5.000/pnp · Rental Rp 100.000/hari (saat setoran dikonfirmasi)</div>
+  <div class="gaji-card">
+    <div class="gaji-head"><div class="drv-av av-b">ZK</div><div style="flex:1"><div style="font-size:13px;font-weight:700">Zakaria</div><div style="font-size:10px;color:var(--mt)">Hiace 8 Kursi · AB 7845 HH</div></div><span id="gaji-badge-zk" class="gaji-badge g-belum">Belum Dibayar</span></div>
+    <div class="row-sb"><span class="rl">Gaji Pokok</span><span class="rv" id="gp-zk">Rp 0</span></div>
+    <div class="row-sb"><span class="rl" style="color:#1e7e44;font-weight:600">Fee (otomatis)</span><span class="rv" style="color:#1e7e44;font-weight:700" id="gf-zk">Rp 0</span></div>
+    <div class="row-sb"><span class="rl">Potongan</span><span class="rv" style="color:var(--dn)" id="gpot-zk">Rp 0</span></div>
+    <div class="divider"></div>
+    <div class="row-sb"><span style="font-size:11px;font-weight:600">Total</span><span style="font-size:14px;font-weight:700;color:var(--sc)" id="gnet-zk">Rp 0</span></div>
+    <div class="row-sb" style="margin-top:3px"><span class="rl">Sudah Dibayar</span><span class="rv" style="color:var(--sc)" id="gbayar-zk">Rp 0</span></div>
+    <div class="row-sb"><span class="rl">Sisa</span><span class="rv" style="font-weight:700" id="gsisa-zk">Rp 0</span></div>
+    <div id="fee-detail-zk"></div>
+    <div style="display:flex;gap:7px;margin-top:8px">
+      <button onclick="openGajiForm('Zakaria')" style="flex:1;padding:7px;border-radius:7px;background:var(--pr);color:#fff;border:none;font-size:10px;font-weight:600;cursor:pointer">Atur Gaji Pokok</button>
+      <button onclick="bayarGaji('Zakaria')" style="flex:1;padding:7px;border-radius:7px;background:var(--sc);color:#fff;border:none;font-size:10px;font-weight:600;cursor:pointer">Bayar Gaji</button>
+    </div>
+    <div class="gaji-rw" id="grw-zk"><div style="font-size:10px;color:var(--mt);text-align:center;padding:5px">Belum ada riwayat.</div></div>
+  </div>
+  <div class="gaji-card">
+    <div class="gaji-head"><div class="drv-av av-g">RH</div><div style="flex:1"><div style="font-size:13px;font-weight:700">Rahmat Hidayat</div><div style="font-size:10px;color:var(--mt)">Hiace 9 Kursi · AB 7167 BE</div></div><span id="gaji-badge-rh" class="gaji-badge g-belum">Belum Dibayar</span></div>
+    <div class="row-sb"><span class="rl">Gaji Pokok</span><span class="rv" id="gp-rh">Rp 0</span></div>
+    <div class="row-sb"><span class="rl" style="color:#1e7e44;font-weight:600">Fee (otomatis)</span><span class="rv" style="color:#1e7e44;font-weight:700" id="gf-rh">Rp 0</span></div>
+    <div class="row-sb"><span class="rl">Potongan</span><span class="rv" style="color:var(--dn)" id="gpot-rh">Rp 0</span></div>
+    <div class="divider"></div>
+    <div class="row-sb"><span style="font-size:11px;font-weight:600">Total</span><span style="font-size:14px;font-weight:700;color:var(--sc)" id="gnet-rh">Rp 0</span></div>
+    <div class="row-sb" style="margin-top:3px"><span class="rl">Sudah Dibayar</span><span class="rv" style="color:var(--sc)" id="gbayar-rh">Rp 0</span></div>
+    <div class="row-sb"><span class="rl">Sisa</span><span class="rv" style="font-weight:700" id="gsisa-rh">Rp 0</span></div>
+    <div id="fee-detail-rh"></div>
+    <div style="display:flex;gap:7px;margin-top:8px">
+      <button onclick="openGajiForm('Rahmat Hidayat')" style="flex:1;padding:7px;border-radius:7px;background:var(--pr);color:#fff;border:none;font-size:10px;font-weight:600;cursor:pointer">Atur Gaji Pokok</button>
+      <button onclick="bayarGaji('Rahmat Hidayat')" style="flex:1;padding:7px;border-radius:7px;background:var(--sc);color:#fff;border:none;font-size:10px;font-weight:600;cursor:pointer">Bayar Gaji</button>
+    </div>
+    <div class="gaji-rw" id="grw-rh"><div style="font-size:10px;color:var(--mt);text-align:center;padding:5px">Belum ada riwayat.</div></div>
+  </div>
+  <div class="sec">Riwayat Pembayaran</div>
+  <div id="gaji-rw-all"></div>
+</div>
+<!-- KONTROL -->
+<div id="pg-kontrol" class="pg">
+  <div class="sec">Log Aktivitas</div>
+  <div class="filter-row">
+    <div class="fbtn active" onclick="filterLog('semua',this)">Semua</div>
+    <div class="fbtn" onclick="filterLog('pesanan',this)">Pesanan</div>
+    <div class="fbtn" onclick="filterLog('setoran',this)">Setoran</div>
+    <div class="fbtn" onclick="filterLog('gaji',this)">Gaji</div>
+    <div class="fbtn" onclick="filterLog('sistem',this)">Sistem</div>
+  </div>
+  <div class="card"><div id="log-list"></div></div>
+  <div class="sec">Setoran Menunggu Konfirmasi</div>
+  <div id="setor-konfirm-list"></div>
+  <div class="sec">Laporan Terkunci</div>
+  <div id="locked-list"></div>
+  <div class="sec">Ganti PIN Admin</div>
+  <div class="card">
+    <div class="fg"><div class="fl">PIN Lama</div><input class="fi" type="password" id="pin-lama" maxlength="4"></div>
+    <div class="fg"><div class="fl">PIN Baru</div><input class="fi" type="password" id="pin-baru" maxlength="4"></div>
+    <div class="fg"><div class="fl">Konfirmasi PIN Baru</div><input class="fi" type="password" id="pin-konfirm" maxlength="4"></div>
+    <button class="btn-pr" onclick="gantiPin()">Ganti PIN</button>
+  </div>
+</div>
+</div>
+<div class="moverlay h" id="mov"><div class="modal">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:11px">
+    <div><div style="font-size:13px;font-weight:700;color:var(--tx)" id="m-title">-</div><div style="font-size:10px;color:var(--mt);margin-top:2px" id="m-sub"></div></div>
+    <button onclick="closeM()" style="background:none;border:none;font-size:21px;color:var(--mt);cursor:pointer;line-height:1;padding:0 3px">x</button>
+  </div>
+  <div id="m-body"></div>
+</div></div>
+<div class="toast" id="tst"></div>
+
+<script>
+const SB_URL='https://mzezxeomggazvrpuwpgu.supabase.co';
+const SB_KEY='sb_publishable_fBI3n7VG_4cqJIGMvcphww_IAzX8lxh';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+var DB=[],SETOR=[],BIAYA=[],LOGS=[],GAJI_RW=[],FEE_LOG=[],LOCKS2=[];
+var GAJI_COMP={'Zakaria':{pokok:3000000,potongan:0,dibayar:0},'Rahmat Hidayat':{pokok:3000000,potongan:0,dibayar:0}};
+var SRV_ST={1:{km:0,kmSaved:0,kmTime:'',riwayat:{},nextKm:{}},2:{km:0,kmSaved:0,kmTime:'',riwayat:{},nextKm:{}}};
+var CTR=1,SCTR=1,BCTR=1,GCTR=1,FCTR=1;
+var fBdr=false,fMhs=false,fStat='',curN=8,curTarif=110000,curRute='Lubuk Sikaping - Padang',selS=[],eSel=[];
+var curPeriod='bulan',logFilter='semua',lapLocked=false,PIN='1234',pinVal='';
+var curArm=1,curKat='semua';
+var today=new Date().toISOString().slice(0,10);
+var FEE_TV=5000,FEE_RT=100000,DIS_MHS=10000;
+
+var SRV_MASTER=[
+  {id:'oli_mesin',kat:'Oli & Filter',color:'#e67e22',nama:'Oli Mesin + Filter',interval:7500,intervalStd:10000,warnAt:700,estBiaya:435000},
+  {id:'filter_udara',kat:'Oli & Filter',color:'#e67e22',nama:'Filter Udara',interval:15000,intervalStd:20000,warnAt:2000,estBiaya:120000},
+  {id:'filter_bbm',kat:'Oli & Filter',color:'#e67e22',nama:'Filter BBM',interval:20000,intervalStd:30000,warnAt:2000,estBiaya:150000},
+  {id:'oli_gardan',kat:'Oli & Filter',color:'#e67e22',nama:'Oli Gardan & Transmisi',interval:30000,intervalStd:40000,warnAt:3000,estBiaya:420000},
+  {id:'minyak_rem',kat:'Oli & Filter',color:'#e67e22',nama:'Minyak Rem',interval:20000,intervalStd:30000,warnAt:2000,estBiaya:80000},
+  {id:'rotasi_ban',kat:'Kaki-Kaki',color:'#2980b9',nama:'Rotasi & Cek Ban',interval:7500,intervalStd:10000,warnAt:700,estBiaya:50000},
+  {id:'balancing',kat:'Kaki-Kaki',color:'#2980b9',nama:'Balancing & Spooring',interval:10000,intervalStd:15000,warnAt:1000,estBiaya:230000},
+  {id:'kaki_ins',kat:'Kaki-Kaki',color:'#2980b9',nama:'Inspeksi Kaki-Kaki',interval:20000,intervalStd:30000,warnAt:2000,estBiaya:0},
+  {id:'kampas_rem',kat:'Pengereman',color:'#8e44ad',nama:'Kampas Rem Dep+Bel',interval:20000,intervalStd:30000,warnAt:2000,estBiaya:600000},
+  {id:'injektor',kat:'Mesin',color:'#e74c3c',nama:'Injektor & EGR',interval:25000,intervalStd:30000,warnAt:2000,estBiaya:500000},
+  {id:'timing',kat:'Mesin',color:'#e74c3c',nama:'Timing Chain & V-Belt',interval:30000,intervalStd:40000,warnAt:3000,estBiaya:250000},
+  {id:'coolant',kat:'Mesin',color:'#e74c3c',nama:'Coolant & Radiator',interval:30000,intervalStd:40000,warnAt:3000,estBiaya:200000},
+  {id:'ac_servis',kat:'AC & Kebersihan',color:'#1abc9c',nama:'Servis AC (Evap+Freon)',interval:15000,intervalStd:20000,warnAt:1500,estBiaya:450000},
+  {id:'lampu',kat:'Lain-Lain',color:'#7f8c8d',nama:'Cek Lampu & Kelistrikan',interval:5000,intervalStd:10000,warnAt:500,estBiaya:0},
+  {id:'sabuk',kat:'Lain-Lain',color:'#7f8c8d',nama:'Sabuk Pengaman',interval:10000,intervalStd:20000,warnAt:1000,estBiaya:0}
+];
+SRV_MASTER.forEach(function(m){SRV_ST[1].nextKm[m.id]=null;SRV_ST[2].nextKm[m.id]=null;});
+var BCAT_CLR={'BBM':'#e67e22','Servis / Perawatan':'#e74c3c','Gaji Driver':'#2980b9','Pajak Kendaraan':'#8e44ad','Asuransi':'#27ae60','Kebersihan':'#1abc9c','Lain-lain':'#7f8c8d'};
+var BCAT_ICO={'BBM':'ti-droplet','Servis / Perawatan':'ti-tool','Gaji Driver':'ti-user','Pajak Kendaraan':'ti-file-invoice','Asuransi':'ti-shield','Kebersihan':'ti-sparkles','Lain-lain':'ti-dots-circle-horizontal'};
+
+/* ── SUPABASE ── */
+function setSS(t,m){var e=document.getElementById('sync-status');if(!e)return;e.className='sync-badge '+t;var i=t==='ok'?'ti-cloud-check':t==='syncing'?'ti-cloud-upload':'ti-cloud-x';e.innerHTML='<i class="ti '+i+'" style="font-size:10px"></i>'+m;}
+async function loadAll(){
+  setSS('syncing','Memuat...');
+  try{
+    var[p,s,b,f,gc,gr,lg,srv]=await Promise.all([
+      sb.from('pesanan').select('*').order('created_at',{ascending:false}),
+      sb.from('setoran').select('*').order('created_at',{ascending:false}),
+      sb.from('biaya').select('*').order('created_at',{ascending:false}),
+      sb.from('fee_log').select('*').order('created_at',{ascending:false}),
+      sb.from('gaji_comp').select('*'),
+      sb.from('gaji_rw').select('*').order('created_at',{ascending:false}),
+      sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(50),
+      sb.from('servis_state').select('*')
+    ]);
+    DB=(p.data||[]).map(r2p);SETOR=s.data||[];BIAYA=b.data||[];FEE_LOG=f.data||[];
+    if(gc.data)gc.data.forEach(function(r){GAJI_COMP[r.driver]={pokok:r.pokok,potongan:r.potongan,dibayar:r.dibayar};});
+    GAJI_RW=gr.data||[];
+    LOGS=(lg.data||[]).map(function(l){return{tipe:l.tipe,aksi:l.aksi,det:l.detail,color:l.color,waktu:l.waktu};});
+    if(srv.data)srv.data.forEach(function(r){
+      SRV_ST[r.armada].kmSaved=r.km_saved||0;SRV_ST[r.armada].kmTime=r.km_time||'';
+      SRV_ST[r.armada].riwayat=r.riwayat||{};SRV_ST[r.armada].nextKm=r.next_km||{};
+      SRV_MASTER.forEach(function(m){if(SRV_ST[r.armada].nextKm[m.id]===undefined)SRV_ST[r.armada].nextKm[m.id]=null;});
+    });
+    if(DB.length){var ids=DB.map(function(x){return parseInt(x.id.replace('HT-',''))||0;});CTR=Math.max.apply(null,ids)+1;}
+    if(SETOR.length){var si=SETOR.map(function(x){return parseInt(x.id.replace('ST-',''))||0;});SCTR=Math.max.apply(null,si)+1;}
+    if(BIAYA.length){var bi=BIAYA.map(function(x){return parseInt((x.id||'').replace('BY-',''))||0;});BCTR=Math.max.apply(null,bi)+1;}
+    setSS('ok','Online');renderAll();
+  }catch(e){setSS('error','Offline - cek internet');console.error(e);}
+}
+function r2p(r){return{id:r.id,tipe:r.tipe,nama:r.nama,hp:r.hp,rute:r.rute,driver:r.driver,armStr:r.arm_str,armadaN:r.armada_n,tgl:r.tgl,jadwal:r.jadwal,seats:r.seats||[],pnp:r.pnp||0,bandara:r.bandara,mahasiswa:r.mahasiswa,diskon:r.diskon||0,total:r.total||0,tarif:r.tarif||0,mulai:r.mulai,selesai:r.selesai,jatuhTempo:r.jatuh_tempo,tipe_rental:r.tipe_rental,harga:r.harga||0,hari:r.hari||0,dp:r.dp||0,sisa:r.sisa||0,catatan:r.catatan,status:r.status,histori:r.histori||[]};}
+function p2r(p){return{id:p.id,tipe:p.tipe,nama:p.nama,hp:p.hp,rute:p.rute,driver:p.driver,arm_str:p.armStr,armada_n:p.armadaN,tgl:p.tgl,jadwal:p.jadwal,seats:p.seats,pnp:p.pnp,bandara:p.bandara,mahasiswa:p.mahasiswa,diskon:p.diskon,total:p.total,tarif:p.tarif,mulai:p.mulai,selesai:p.selesai,jatuh_tempo:p.jatuhTempo,tipe_rental:p.tipe_rental,harga:p.harga,hari:p.hari,dp:p.dp,sisa:p.sisa,catatan:p.catatan,status:p.status,histori:p.histori};}
+async function svP(p){await sb.from('pesanan').upsert(p2r(p));setSS('ok','Tersimpan');}
+async function svS(s){await sb.from('setoran').upsert(s);}
+async function svB(b){await sb.from('biaya').upsert(b);}
+async function svF(f){await sb.from('fee_log').upsert(f);}
+async function svGC(drv){var c=GAJI_COMP[drv];await sb.from('gaji_comp').upsert({driver:drv,pokok:c.pokok,potongan:c.potongan,dibayar:c.dibayar,updated_at:new Date().toISOString()});}
+async function svGR(g){await sb.from('gaji_rw').upsert(g);}
+async function svLog(l){await sb.from('activity_log').insert({tipe:l.tipe,aksi:l.aksi,detail:l.det,color:l.color,waktu:l.waktu});}
+async function svSrv(arm){var s=SRV_ST[arm];await sb.from('servis_state').upsert({armada:arm,km_saved:s.kmSaved,km_time:s.kmTime,riwayat:s.riwayat,next_km:s.nextKm,updated_at:new Date().toISOString()});}
+function setupRT(){sb.channel('hamco').on('postgres_changes',{event:'*',schema:'public',table:'setoran'},function(){loadAll();}).on('postgres_changes',{event:'*',schema:'public',table:'pesanan'},function(){loadAll();}).subscribe();}
+
+/* ── HELPERS ── */
+function fmtRp(n){return'Rp '+(n||0).toLocaleString('id-ID');}
+function drvN(n){return n===8?'Zakaria':'Rahmat Hidayat';}
+function getTglR(p){if(p.tipe!=='rental'||!p.mulai||!p.selesai)return[];var l=[],c=new Date(p.mulai),e=new Date(p.selesai);while(c<=e){l.push(c.toISOString().slice(0,10));c.setDate(c.getDate()+1);}return l;}
+function getTgl(p){return p.tipe==='rental'?getTglR(p):p.tgl?[p.tgl]:[];}
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function T(m,t){var e=document.getElementById('tst');e.textContent=m;e.style.background=t==='err'?'#e74c3c':'#27ae60';e.classList.add('show');setTimeout(function(){e.classList.remove('show');},2400);}
+async function addLog(tipe,aksi,det,color){var l={tipe,aksi,det,color:color||'#6b7a99',waktu:new Date().toLocaleString('id-ID',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})};LOGS.unshift(l);if(LOGS.length>80)LOGS.pop();await svLog(l);}
+
+/* ── PIN ── */
+function pinI(d){if(pinVal.length>=4)return;pinVal+=d;updDots();if(pinVal.length===4)setTimeout(checkPin,200);}
+function pinD(){pinVal=pinVal.slice(0,-1);updDots();}
+function updDots(){for(var i=0;i<4;i++)document.getElementById('d'+i).className='pin-dot'+(i<pinVal.length?' filled':'');}
+function checkPin(){if(pinVal===PIN){document.getElementById('pin-screen').classList.add('h');addLog('sistem','Login berhasil','','#27ae60');loadAll().then(function(){setupRT();});}else{document.getElementById('pin-err').textContent='PIN salah.';pinVal='';updDots();setTimeout(function(){document.getElementById('pin-err').textContent='';},2000);}}
+function logout(){document.getElementById('pin-screen').classList.remove('h');pinVal='';updDots();}
+function gantiPin(){var l=document.getElementById('pin-lama').value,b=document.getElementById('pin-baru').value,k=document.getElementById('pin-konfirm').value;if(l!==PIN){T('PIN lama salah','err');return;}if(b.length!==4||isNaN(b)){T('PIN harus 4 digit','err');return;}if(b!==k){T('Konfirmasi tidak cocok','err');return;}PIN=b;['pin-lama','pin-baru','pin-konfirm'].forEach(function(x){document.getElementById(x).value='';});addLog('sistem','PIN diubah','','#e8a020');T('PIN berhasil diubah!');}
+
+/* ── KONFLIK ── */
+function cekKonflik(){var tgl=document.getElementById('f-tgl').value,drv=drvN(curN),box=document.getElementById('conflict-box'),btn=document.getElementById('btn-simpan');if(!tgl){box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';return;}var k=DB.filter(function(p){return p.status!=='Batal'&&p.driver===drv&&getTgl(p).indexOf(tgl)!==-1;});if(k.length){document.getElementById('conflict-msg').textContent=drv+' sudah ada: '+k.map(function(p){return p.id;}).join(', ');box.className='conflict-box show';btn.disabled=true;btn.style.opacity='0.5';}else{box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';}}
+function cekKonflikR(){var drv=document.getElementById('r-arm').value,mul=document.getElementById('r-mul').value,sel=document.getElementById('r-sel').value,box=document.getElementById('conflict-box-r'),btn=document.getElementById('btn-simpan-r');if(!mul){box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';return;}var e=sel||mul,c=new Date(mul),end=new Date(e),tl=[];while(c<=end){tl.push(c.toISOString().slice(0,10));c.setDate(c.getDate()+1);}var k=DB.filter(function(p){return p.status!=='Batal'&&p.driver===drv&&tl.some(function(t){return getTgl(p).indexOf(t)!==-1;});});if(k.length){document.getElementById('conflict-msg-r').textContent=drv+' sudah ada pesanan di tanggal tersebut';box.className='conflict-box show';btn.disabled=true;btn.style.opacity='0.5';}else{box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';}}
+
+/* ── SEAT PICKER ── */
+function mkS(num,bk,sv,pv,onT){var e=document.createElement('div');e.className='s'+(sv?' sel':bk?' bkd':'');e.textContent=num;if(!bk)e.addEventListener('click',function(){onT(num);});return e;}
+function mkD(n1,n2,b1,b2,s1,s2,p1,p2,onT){var w=document.createElement('div');w.className='sdbl'+(s1&&s2?' sel':b1&&b2?' bkd':'');var h1=document.createElement('div');h1.className='sh';h1.textContent=n1;h1.style.pointerEvents='auto';var dv=document.createElement('div');dv.className='sdv';var h2=document.createElement('div');h2.className='sh';h2.textContent=n2;h2.style.pointerEvents='auto';if(!b1)h1.addEventListener('click',function(e){e.stopPropagation();onT(n1);});if(!b2)h2.addEventListener('click',function(e){e.stopPropagation();onT(n2);});w.appendChild(h1);w.appendChild(dv);w.appendChild(h2);return w;}
+function mkRow(cells){var r=document.createElement('div');r.className='srow';cells.forEach(function(c){r.appendChild(c);});return r;}
+function mkG(){var d=document.createElement('div');d.className='sgap';return d;}
+function mkA(){var d=document.createElement('div');d.className='saisle';return d;}
+function drawSeats(gId,n,bk,sel,prev,onT){var g=document.getElementById(gId);if(!g)return;g.innerHTML='';function S(num){var b=bk.indexOf(num)!==-1,s=sel.indexOf(num)!==-1;return mkS(num,b,s,false,onT);}function D(n1,n2){var b1=bk.indexOf(n1)!==-1,b2=bk.indexOf(n2)!==-1,s1=sel.indexOf(n1)!==-1,s2=sel.indexOf(n2)!==-1;return mkD(n1,n2,b1,b2,s1,s2,false,false,onT);}if(n===8){g.appendChild(mkRow([S(1),mkG()]));g.appendChild(mkRow([S(2),S(3),mkA(),mkG()]));g.appendChild(mkRow([S(4),S(5),mkA(),mkG()]));g.appendChild(mkRow([S(6),S(7),S(8)]));}else{g.appendChild(mkRow([S(1),mkG()]));g.appendChild(mkRow([S(2),S(3),mkA(),mkG()]));g.appendChild(mkRow([D(5,6),mkA(),S(4)]));g.appendChild(mkRow([S(7),S(8),S(9)]));}}
+function getBk(rute,armN,skip){var r=[];DB.forEach(function(p){if(p.id===skip||p.status==='Batal'||p.tipe==='rental')return;if(p.rute===rute&&p.armadaN===armN&&p.seats)p.seats.forEach(function(s){r.push(s);});});return r;}
+function togFS(num){var i=selS.indexOf(num);if(i===-1)selS.push(num);else selS.splice(i,1);selS.sort(function(a,b){return a-b;});redrawFS();hitF();}
+function redrawFS(){drawSeats('sg',curN,getBk(curRute,curN,null),selS,[],togFS);var n=selS.length;document.getElementById('sp-cnt').textContent=n+' dipilih';var ss=document.getElementById('ssel');if(n>0){ss.style.display='flex';document.getElementById('ssel-t').textContent='Kursi '+selS.join(', ');document.getElementById('ssel-c').textContent=n;}else ss.style.display='none';}
+function swArm(n){curN=n;selS=[];document.getElementById('at8').className='atab'+(n===8?' active':'');document.getElementById('at9').className='atab'+(n===9?' active':'');document.getElementById('sp-title').textContent=n===8?'Hiace 8 - Zakaria':'Hiace 9 - Rahmat';redrawFS();hitF();cekKonflik();}
+function onRC(){var p=document.getElementById('f-rute').value.split('|');curTarif=parseInt(p[0]);curRute=p[1];document.getElementById('wj').style.display=(p[2]==='lp'||p[2]==='pl')?'flex':'none';selS=[];redrawFS();hitF();}
+function tgMhs(){fMhs=!fMhs;document.getElementById('tg-mhs').className='tgl-btn'+(fMhs?' on':'');hitF();}
+function tgF(){fBdr=!fBdr;document.getElementById('tgf').className='tgl-btn'+(fBdr?' on':'');hitF();}
+function hitF(){var n=selS.length;if(n===0){document.getElementById('harga-prev').style.display='none';return;}var x=fBdr?20000:0,dis=fMhs?DIS_MHS:0,tarif=curTarif+x-dis,total=tarif*n;document.getElementById('harga-prev').style.display='block';document.getElementById('hp-dasar').textContent=fmtRp(curTarif)+'/pnp';document.getElementById('hp-bdr-row').style.display=fBdr?'flex':'none';document.getElementById('hp-dis-row').style.display=fMhs?'flex':'none';if(fMhs)document.getElementById('hp-dis').textContent='-'+fmtRp(DIS_MHS)+'/pnp x'+n;document.getElementById('hp-total').textContent=fmtRp(total);}
+function hitR(){var h=parseInt(document.getElementById('r-hrg').value)||0,m=document.getElementById('r-mul').value,s=document.getElementById('r-sel').value,dp=parseInt(document.getElementById('r-dp').value)||0,hari=1;if(m&&s){var d=Math.round((new Date(s)-new Date(m))/864e5);if(d>0)hari=d;}var total=h*hari,sisa=Math.max(0,total-dp),sum=document.getElementById('r-summary');if(h>0&&m){sum.style.display='block';document.getElementById('r-s-hari').textContent=hari+' hari';document.getElementById('r-s-total').textContent=fmtRp(total);document.getElementById('r-s-dp').textContent=dp>0?fmtRp(dp):'Belum ada DP';document.getElementById('r-s-sisa').textContent=fmtRp(sisa);}else sum.style.display='none';}
+
+/* ── SIMPAN PESANAN ── */
+async function simpan(){
+  var nama=document.getElementById('f-nama').value.trim(),tgl=document.getElementById('f-tgl').value;
+  if(!nama||!tgl||!selS.length||document.getElementById('btn-simpan').disabled){T('Lengkapi form','err');return;}
+  var p=document.getElementById('f-rute').value.split('|'),dir=p[2];
+  var jadwal=(dir==='lp'||dir==='pl')?document.getElementById('f-jadwal').value:'';
+  var x=fBdr?20000:0,dis=fMhs?DIS_MHS*selS.length:0,tarif=curTarif+x-(fMhs?DIS_MHS:0),tot=tarif*selS.length;
+  var drv=curN===8?'Zakaria':'Rahmat Hidayat',armStr=curN===8?'Hiace 8 · AB 7845 HH':'Hiace 9 · AB 7167 BE';
+  var id='HT-'+String(CTR++).padStart(3,'0');
+  var obj={id,tipe:'travel',nama,hp:document.getElementById('f-hp').value.trim(),rute:curRute,driver:drv,armStr,armadaN:curN,tgl,jadwal,seats:selS.slice(),pnp:selS.length,bandara:fBdr,mahasiswa:fMhs,diskon:dis,total:tot,tarif:curTarif,catatan:document.getElementById('f-cat').value.trim(),status:'Menunggu',histori:[{waktu:new Date().toLocaleString('id-ID'),aksi:'Dibuat',tarif:tot}]};
+  setSS('syncing','Menyimpan...');DB.unshift(obj);await svP(obj);await addLog('pesanan','Pesanan baru '+id,nama,'#2980b9');
+  selS=[];['f-nama','f-hp','f-tgl','f-cat'].forEach(function(x){document.getElementById(x).value='';});
+  fBdr=false;fMhs=false;document.getElementById('tgf').className='tgl-btn';document.getElementById('tg-mhs').className='tgl-btn';
+  document.getElementById('conflict-box').className='conflict-box';document.getElementById('btn-simpan').disabled=false;document.getElementById('btn-simpan').style.opacity='1';document.getElementById('harga-prev').style.display='none';
+  redrawFS();hitF();renderAll();T(id+' tersimpan!');setTimeout(function(){SWN('pesanan');},700);
+}
+async function simpanR(){
+  var nama=document.getElementById('r-nama').value.trim(),mul=document.getElementById('r-mul').value,sel=document.getElementById('r-sel').value,h=parseInt(document.getElementById('r-hrg').value)||0;
+  if(!nama||!mul||!sel||!h||document.getElementById('btn-simpan-r').disabled){T('Lengkapi form','err');return;}
+  var hari=Math.max(1,Math.round((new Date(sel)-new Date(mul))/864e5)),total=h*hari,dp=parseInt(document.getElementById('r-dp').value)||0,sisa=Math.max(0,total-dp),drv=document.getElementById('r-arm').value;
+  var armStr=drv==='Zakaria'?'Hiace 8 · AB 7845 HH':'Hiace 9 · AB 7167 BE';
+  var id='HT-'+String(CTR++).padStart(3,'0');
+  var obj={id,tipe:'rental',nama,hp:document.getElementById('r-hp').value.trim(),rute:'Rental Hiace '+(drv==='Zakaria'?'8':'9'),driver:drv,armStr,tgl:mul,mulai:mul,selesai:sel,jatuhTempo:document.getElementById('r-jt').value||sel,tipe_rental:document.getElementById('r-tip').value,harga:h,hari,total,dp,sisa,catatan:document.getElementById('r-cat').value.trim(),status:'Menunggu',histori:[{waktu:new Date().toLocaleString('id-ID'),aksi:'Dibuat',tarif:total}]};
+  setSS('syncing','Menyimpan...');DB.unshift(obj);await svP(obj);await addLog('pesanan','Rental baru '+id,nama,'#27ae60');
+  ['r-nama','r-hp','r-mul','r-sel','r-jt','r-hrg','r-dp','r-cat'].forEach(function(x){document.getElementById(x).value='';});
+  document.getElementById('r-summary').style.display='none';document.getElementById('conflict-box-r').className='conflict-box';
+  document.getElementById('btn-simpan-r').disabled=false;document.getElementById('btn-simpan-r').style.opacity='1';
+  renderAll();T(id+' tersimpan!');setTimeout(function(){SWN('pesanan');},700);
+}
+
+/* ── SETORAN + FEE ── */
+async function hitungFee(storId){
+  var stor=SETOR.find(function(x){return x.id===storId;});if(!stor)return 0;
+  var drv=stor.driver,tgl=stor.tgl;
+  var sudah=FEE_LOG.filter(function(f){return f.stor_id===storId;}).map(function(f){return f.pesanan_id;});
+  var pesanan=DB.filter(function(p){return p.driver===drv&&p.status!=='Batal'&&getTgl(p).indexOf(tgl)!==-1&&sudah.indexOf(p.id)===-1;});
+  var tot=0;
+  for(var i=0;i<pesanan.length;i++){
+    var p=pesanan[i],fee=0,detail='';
+    if(p.tipe==='travel'){fee=FEE_TV*p.pnp;detail=p.id+' · '+p.pnp+' pnp x Rp '+FEE_TV.toLocaleString('id-ID');}
+    else if(p.tipe==='rental'){fee=FEE_RT*p.hari;detail=p.id+' · '+p.hari+' hari x Rp '+FEE_RT.toLocaleString('id-ID');}
+    if(fee>0){var fr={id:'FE-'+String(FCTR++).padStart(3,'0'),driver:drv,tgl,pesanan_id:p.id,tipe:p.tipe,jumlah:fee,detail,stor_id:storId};FEE_LOG.push(fr);tot+=fee;await svF(fr);}
+  }
+  return tot;
+}
+function getFee(drv){return FEE_LOG.filter(function(f){return f.driver===drv;}).reduce(function(s,f){return s+f.jumlah;},0);}
+function getFeeDetail(drv){return FEE_LOG.filter(function(f){return f.driver===drv;});}
+async function konfirmSetor(id){
+  var s=SETOR.find(function(x){return x.id===id;});if(!s)return;
+  s.status='Dikonfirmasi';setSS('syncing','Mengonfirmasi...');await svS(s);
+  var fee=await hitungFee(id);
+  await addLog('setoran','Setoran dikonfirmasi '+id,s.driver+' · '+fmtRp(s.jumlah)+(fee?' + Fee '+fmtRp(fee):''),'#27ae60');
+  renderAll();if(fee>0)T(id+' dikonfirmasi! Fee +'+fmtRp(fee));else T(id+' dikonfirmasi!');
+}
+async function tolakSetor(id){var s=SETOR.find(function(x){return x.id===id;});if(!s)return;s.status='Ditolak';await svS(s);await addLog('setoran','Setoran ditolak '+id,s.driver,'#e74c3c');renderAll();T(id+' ditolak','err');}
+async function simpanSetorSim(){
+  var drv=document.getElementById('sim-drv').value,tgl=document.getElementById('sim-tgl').value,jml=parseInt(document.getElementById('sim-jml').value)||0,ket=document.getElementById('sim-ket').value.trim();
+  if(!tgl||!jml){T('Isi semua field','err');return;}
+  var id='ST-'+String(SCTR++).padStart(3,'0');var s={id,driver:drv,tgl,jumlah:jml,keterangan:ket,status:'Menunggu'};
+  SETOR.unshift(s);await svS(s);await addLog('setoran','Setoran masuk '+id,drv+' · '+fmtRp(jml),'#e8a020');
+  document.getElementById('sim-jml').value='';document.getElementById('sim-ket').value='';
+  renderAll();T(id+' masuk - menunggu konfirmasi');
+}
+
+/* ── BIAYA ── */
+async function simpanBiaya(){
+  if(lapLocked){T('Laporan terkunci','err');return;}
+  var kat=document.getElementById('b-kat').value,tgl=document.getElementById('b-tgl').value,nama=document.getElementById('b-nama').value.trim(),jml=parseInt(document.getElementById('b-jml').value)||0;
+  if(!jml||!nama){T('Isi semua field','err');return;}
+  var id='BY-'+String(BCTR++).padStart(3,'0');var b={id,kategori:kat,tgl,nama,jumlah:jml};
+  BIAYA.unshift(b);await svB(b);document.getElementById('b-nama').value='';document.getElementById('b-jml').value='';
+  await addLog('biaya','Pengeluaran',nama+' · '+fmtRp(jml),'#e74c3c');renderAll();T('Pengeluaran disimpan!');
+}
+async function hapusBiaya(id){if(lapLocked){T('Laporan terkunci','err');return;}BIAYA=BIAYA.filter(function(b){return b.id!==id;});await sb.from('biaya').delete().eq('id',id);renderAll();T('Dihapus');}
+
+/* ── STATUS PESANAN ── */
+async function setStatus(id,ns){var p=DB.find(function(x){return x.id===id;});if(p){p.status=ns;await svP(p);await addLog('pesanan','Status '+p.id+' -> '+ns,p.nama,'#27ae60');renderAll();T('Status -> '+ns);}}
+function setFS(s,el){fStat=s;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});el.classList.add('active');renderP();}
+
+/* ── GAJI ── */
+function renderGaji(){
+  ['Zakaria','Rahmat Hidayat'].forEach(function(drv){
+    var pfx=drv==='Zakaria'?'zk':'rh',c=GAJI_COMP[drv],fee=getFee(drv),net=c.pokok+fee-c.potongan,sisa=Math.max(0,net-c.dibayar);
+    document.getElementById('gp-'+pfx).textContent=fmtRp(c.pokok);
+    document.getElementById('gf-'+pfx).textContent=fmtRp(fee);
+    document.getElementById('gpot-'+pfx).textContent=fmtRp(c.potongan);
+    document.getElementById('gnet-'+pfx).textContent=fmtRp(net);
+    document.getElementById('gbayar-'+pfx).textContent=fmtRp(c.dibayar);
+    document.getElementById('gsisa-'+pfx).textContent=fmtRp(sisa);
+    document.getElementById('gsisa-'+pfx).style.color=sisa===0?'var(--sc)':'var(--dn)';
+    var badge=document.getElementById('gaji-badge-'+pfx);
+    if(sisa===0&&c.dibayar>0){badge.textContent='Lunas';badge.className='gaji-badge g-lunas';}
+    else if(c.dibayar>0&&sisa>0){badge.textContent='Sebagian';badge.className='gaji-badge g-sebagian';}
+    else{badge.textContent='Belum Dibayar';badge.className='gaji-badge g-belum';}
+    var fi=getFeeDetail(drv);
+    var fe=document.getElementById('fee-detail-'+pfx);
+    if(fi.length){fe.innerHTML='<div class="fee-box"><div class="fee-title">Rincian Fee (dari setoran dikonfirmasi)</div>'+fi.map(function(f){return'<div class="fee-item"><span style="color:var(--mt);font-size:9px">'+f.detail+'</span><span style="font-weight:700;color:#1e7e44">'+fmtRp(f.jumlah)+'</span></div>';}).join('')+'<div class="fee-total"><span>Total Fee</span><span>'+fmtRp(fee)+'</span></div></div>';}
+    else{fe.innerHTML='<div style="font-size:10px;color:var(--mt);padding:5px 0">Fee muncul otomatis saat setoran dikonfirmasi.</div>';}
+    var rw=GAJI_RW.filter(function(g){return g.driver===drv;});
+    document.getElementById('grw-'+pfx).innerHTML=rw.length?rw.slice(0,5).map(function(g){return'<div class="gaji-rw-item"><span style="color:var(--mt)">'+g.tgl+' · '+g.keterangan+'</span><span style="font-weight:700;color:var(--sc)">'+fmtRp(g.jumlah)+'</span></div>';}).join(''):'<div style="font-size:10px;color:var(--mt);text-align:center;padding:5px">Belum ada riwayat.</div>';
+  });
+  var f1=getFee('Zakaria'),f2=getFee('Rahmat Hidayat'),c1=GAJI_COMP['Zakaria'],c2=GAJI_COMP['Rahmat Hidayat'];
+  var n1=c1.pokok+f1-c1.potongan,n2=c2.pokok+f2-c2.potongan;
+  document.getElementById('gaji-total').textContent=fmtRp(n1+n2);
+  document.getElementById('gaji-tot-zk').textContent=fmtRp(n1);
+  document.getElementById('gaji-tot-rh').textContent=fmtRp(n2);
+  document.getElementById('gaji-rw-all').innerHTML=GAJI_RW.length?GAJI_RW.map(function(g){return'<div class="card" style="margin-bottom:7px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:11px;font-weight:600">'+g.driver+'</div><div style="font-size:10px;color:var(--mt)">'+g.tgl+' · '+g.keterangan+'</div></div><div style="font-size:13px;font-weight:700;color:var(--sc)">'+fmtRp(g.jumlah)+'</div></div></div>';}).join(''):'<div class="kosong"><i class="ti ti-wallet"></i><div style="font-size:11px">Belum ada riwayat.</div></div>';
+  document.getElementById('db-fee').textContent=fmtRp(f1+f2);
+}
+function openGajiForm(drv){
+  var c=GAJI_COMP[drv],fee=getFee(drv);
+  document.getElementById('m-title').textContent='Atur Gaji Pokok';document.getElementById('m-sub').textContent=drv;
+  document.getElementById('m-body').innerHTML='<div style="background:#eafaf1;border:.5px solid #a9dfbf;border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:10px;color:#1e7e44">Fee '+fmtRp(fee)+' dihitung otomatis dari setoran.</div><div class="fg"><div class="fl">Gaji Pokok (Rp)</div><input class="fi" type="number" id="gf-pokok" value="'+c.pokok+'"></div><div class="fg"><div class="fl">Potongan (Rp)</div><input class="fi" type="number" id="gf-potongan" value="'+c.potongan+'"></div><div style="background:var(--pr);border-radius:8px;padding:9px 12px;margin-bottom:8px;font-size:11px;color:#fff">Total: <strong style="color:var(--ac)" id="gf-prev">'+fmtRp(c.pokok+fee-c.potongan)+'</strong></div><button class="btn-pr" onclick="simpanKompGaji(\''+drv+'\')">Simpan</button>';
+  ['gf-pokok','gf-potongan'].forEach(function(id){document.getElementById(id).addEventListener('input',function(){var p2=parseInt(document.getElementById('gf-pokok').value)||0,pt=parseInt(document.getElementById('gf-potongan').value)||0;var el=document.getElementById('gf-prev');if(el)el.textContent=fmtRp(p2+fee-pt);});});
+  document.getElementById('mov').classList.remove('h');
+}
+async function simpanKompGaji(drv){GAJI_COMP[drv].pokok=parseInt(document.getElementById('gf-pokok').value)||0;GAJI_COMP[drv].potongan=parseInt(document.getElementById('gf-potongan').value)||0;await svGC(drv);await addLog('gaji','Gaji pokok diubah',drv,'#e8a020');closeM();renderGaji();T('Disimpan!');}
+function bayarGaji(drv){
+  var c=GAJI_COMP[drv],fee=getFee(drv),net=c.pokok+fee-c.potongan,sisa=Math.max(0,net-c.dibayar);
+  if(sisa===0){T('Gaji sudah lunas','err');return;}
+  document.getElementById('m-title').textContent='Bayar Gaji';document.getElementById('m-sub').textContent=drv+' · Sisa: '+fmtRp(sisa);
+  document.getElementById('m-body').innerHTML='<div style="background:var(--bg);border-radius:8px;padding:9px 12px;margin-bottom:9px;font-size:11px"><div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--mt)">Gaji Pokok</span><span>'+fmtRp(c.pokok)+'</span></div><div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:#1e7e44">Fee Otomatis</span><span style="color:#1e7e44;font-weight:700">'+fmtRp(fee)+'</span></div><div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--dn)">Potongan</span><span style="color:var(--dn)">'+fmtRp(c.potongan)+'</span></div><div style="height:.5px;background:var(--bd);margin:5px 0"></div><div style="display:flex;justify-content:space-between;padding:2px 0;font-weight:700"><span>Total</span><span style="color:var(--sc)">'+fmtRp(net)+'</span></div><div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--mt)">Sudah Dibayar</span><span>'+fmtRp(c.dibayar)+'</span></div><div style="display:flex;justify-content:space-between;padding:2px 0;font-weight:700"><span>Sisa Bayar</span><span style="color:var(--dn)">'+fmtRp(sisa)+'</span></div></div><div class="fg"><div class="fl">Jumlah (Rp)</div><input class="fi" type="number" id="gp-jml" value="'+sisa+'"></div><div class="fg"><div class="fl">Tanggal Bayar</div><input class="fi" type="date" id="gp-tgl" value="'+today+'"></div><div class="fg"><div class="fl">Keterangan</div><input class="fi" type="text" id="gp-ket" placeholder="Gaji bulan Juni 2026"></div><button class="btn-pr" onclick="prosesBayarGaji(\''+drv+'\')">Proses Pembayaran</button>';
+  document.getElementById('mov').classList.remove('h');
+}
+async function prosesBayarGaji(drv){
+  var jml=parseInt(document.getElementById('gp-jml').value)||0,tgl=document.getElementById('gp-tgl').value,ket=document.getElementById('gp-ket').value.trim();
+  if(!jml||!tgl){T('Lengkapi form','err');return;}
+  GAJI_COMP[drv].dibayar+=jml;
+  var g={id:'GJ-'+String(GCTR++).padStart(3,'0'),driver:drv,jumlah:jml,tgl,keterangan:ket||'Pembayaran gaji'};
+  GAJI_RW.unshift(g);
+  var b={id:'BY-'+String(BCTR++).padStart(3,'0'),kategori:'Gaji Driver',tgl,nama:'Gaji '+drv,jumlah:jml};
+  BIAYA.unshift(b);
+  await svGC(drv);await svGR(g);await svB(b);await addLog('gaji','Gaji dibayar - '+drv,fmtRp(jml),'#27ae60');
+  closeM();renderGaji();renderLaporan();T('Gaji '+drv+' dibayar: '+fmtRp(jml));
+}
+
+/* ── LAPORAN ── */
+function toggleLock(){lapLocked=!lapLocked;var btn=document.getElementById('lock-btn'),lbl=document.getElementById('lock-lbl'),bb=document.getElementById('btn-biaya');if(lapLocked){lbl.textContent='TERKUNCI';btn.textContent='Buka';btn.style.background='var(--dn)';if(bb){bb.disabled=true;bb.style.opacity='0.5';}LOCKS2.unshift({period:curPeriod,tgl:today});addLog('sistem','Laporan dikunci','','#e8a020');T('Laporan dikunci!');}else{lbl.textContent='Belum dikunci';btn.textContent='Kunci';btn.style.background='var(--pr)';if(bb){bb.disabled=false;bb.style.opacity='1';}T('Laporan dibuka kunci');}}
+function setPeriod(p,el){curPeriod=p;document.querySelectorAll('.ptab').forEach(function(b){b.classList.remove('active');});el.classList.add('active');renderLaporan();}
+function fbp(arr,tglField){return arr.filter(function(x){var t=x[tglField];if(!t)return curPeriod==='semua';if(curPeriod==='bulan')return t.startsWith(today.slice(0,7));if(curPeriod==='minggu'){var d=(new Date()-new Date(t))/864e5;return d>=0&&d<7;}return true;});}
+function renderKas(){
+  var pend=DB.filter(function(p){return p.status!=='Batal';}).reduce(function(s,p){return s+p.total;},0);
+  var setor=SETOR.filter(function(s){return s.status==='Dikonfirmasi';}).reduce(function(s,x){return s+x.jumlah;},0);
+  var biaya=BIAYA.reduce(function(s,b){return s+b.jumlah;},0);
+  document.getElementById('kas-pend').textContent=fmtRp(pend);document.getElementById('kas-setor').textContent=fmtRp(setor);document.getElementById('kas-biaya').textContent=fmtRp(biaya);
+  var kf=parseInt((document.getElementById('kas-fisik')||{}).value)||0;var sel=kf-(setor-biaya);
+  document.getElementById('kas-selisih').textContent=fmtRp(Math.abs(sel));document.getElementById('kas-selisih').style.color=sel===0?'var(--sc)':sel>0?'var(--ac)':'var(--dn)';
+  document.getElementById('kas-status').textContent=kf?sel===0?'Kas sesuai':sel>0?'Kas lebih '+fmtRp(sel):'Kas kurang '+fmtRp(Math.abs(sel)):'Input kas fisik untuk rekonsiliasi.';
+}
+function exportData(){var data={pesanan:DB,setoran:SETOR,biaya:BIAYA,fee_log:FEE_LOG,gaji:GAJI_RW,waktu:new Date().toISOString()};var json=JSON.stringify(data,null,2);var blob=new Blob([json],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='HAMCO_backup_'+today+'.json';a.click();T('Backup berhasil!');}
+function renderLaporan(){
+  var dbF=fbp(DB.filter(function(p){return p.status!=='Batal';}),'tgl');
+  var stF=fbp(SETOR.filter(function(s){return s.status==='Dikonfirmasi';}),'tgl');
+  var byF=fbp(BIAYA,'tgl');
+  var tv=dbF.filter(function(p){return p.tipe==='travel';}).reduce(function(s,p){return s+p.total;},0);
+  var rt=dbF.filter(function(p){return p.tipe==='rental';}).reduce(function(s,p){return s+p.total;},0);
+  var pend=tv+rt,setor=stF.reduce(function(s,x){return s+x.jumlah;},0),biaya=byF.reduce(function(s,b){return s+b.jumlah;},0),laba=pend-biaya;
+  var diskon=dbF.filter(function(p){return p.mahasiswa;}).reduce(function(s,p){return s+(p.diskon||0);},0);
+  var piutang=DB.filter(function(p){return p.status!=='Batal'&&p.tipe==='rental'&&p.sisa>0;}).reduce(function(s,p){return s+p.sisa;},0);
+  document.getElementById('lap-laba').textContent=fmtRp(laba);document.getElementById('lap-total').textContent=fmtRp(pend);document.getElementById('lap-biaya-tot').textContent=fmtRp(biaya);document.getElementById('lap-setor').textContent=fmtRp(setor);document.getElementById('lap-tv').textContent=fmtRp(tv);document.getElementById('lap-rt').textContent=fmtRp(rt);document.getElementById('lap-diskon').textContent=fmtRp(diskon);document.getElementById('lap-piutang').textContent=fmtRp(piutang);
+  document.getElementById('laba-box').className='laba-box '+(laba>=0?'profit':'loss');
+  renderKas();
+  var days=[];for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
+  var maxV=0;var dd=days.map(function(day){var tv2=DB.filter(function(p){return p.status!=='Batal'&&p.tipe==='travel'&&p.tgl===day;}).reduce(function(s,p){return s+p.total;},0);var rt2=DB.filter(function(p){return p.status!=='Batal'&&p.tipe==='rental'&&p.tgl===day;}).reduce(function(s,p){return s+p.total;},0);var st2=SETOR.filter(function(s){return s.status==='Dikonfirmasi'&&s.tgl===day;}).reduce(function(s,x){return s+x.jumlah;},0);var by2=byF.filter(function(b){return b.tgl===day;}).reduce(function(s,b){return s+b.jumlah;},0);var m=Math.max(tv2,rt2,st2,by2);if(m>maxV)maxV=m;return{day,tv:tv2,rt:rt2,st:st2,by:by2};});
+  var area=document.getElementById('chart-bars');area.innerHTML='';var maxH=60;
+  dd.forEach(function(d){var col=document.createElement('div');col.className='bc';var stack=document.createElement('div');stack.className='bar-stack';function bar(val,color){var b=document.createElement('div');b.className='bar-fill';b.style.background=color;b.style.height=(maxV>0?Math.max(3,Math.round((val/maxV)*maxH)):3)+'px';b.style.width='75%';return b;}if(d.by>0)stack.appendChild(bar(d.by,'var(--dn)'));if(d.st>0)stack.appendChild(bar(d.st,'var(--sc)'));if(d.rt>0)stack.appendChild(bar(d.rt,'var(--ac)'));if(d.tv>0)stack.appendChild(bar(d.tv,'var(--pr)'));col.appendChild(stack);var lbl=document.createElement('div');lbl.className='bar-lbl';lbl.textContent=d.day.slice(5).replace('-','/');col.appendChild(lbl);area.appendChild(col);});
+  var el=document.getElementById('biaya-list');
+  el.innerHTML=byF.length?byF.map(function(b){var clr=BCAT_CLR[b.kategori]||'#7f8c8d',ico=BCAT_ICO[b.kategori]||'ti-dots-circle-horizontal';return'<div class="biaya-item"><div class="biaya-ico" style="background:'+clr+'22"><i class="ti '+ico+'" style="color:'+clr+'"></i></div><div class="biaya-info"><div class="biaya-n">'+escH(b.nama)+'</div><div class="biaya-d">'+b.tgl+' · '+b.kategori+'</div></div><div><div class="biaya-jml">'+fmtRp(b.jumlah)+'</div>'+(lapLocked?'':'<button onclick="hapusBiaya(\''+b.id+'\')" style="font-size:8px;padding:2px 7px;border-radius:20px;border:.5px solid var(--bd);background:var(--cd);color:var(--dn);cursor:pointer;margin-top:2px">Hapus</button>')+'</div></div>';}).join(''):'<div class="kosong"><i class="ti ti-inbox"></i><div style="font-size:11px">Belum ada pengeluaran.</div></div>';
+}
+
+/* ── REKONSILIASI ── */
+function renderRekon(){
+  var bln=document.getElementById('rek-bln').value||today.slice(0,7),drvF=document.getElementById('rek-drv').value;
+  var tglSet={};
+  DB.filter(function(p){return p.status!=='Batal'&&p.tgl&&p.tgl.startsWith(bln);}).forEach(function(p){tglSet[p.tgl]=true;});
+  SETOR.filter(function(s){return s.tgl.startsWith(bln);}).forEach(function(s){tglSet[s.tgl]=true;});
+  var tgls=Object.keys(tglSet).sort().reverse();
+  var el=document.getElementById('rekon-list');
+  if(!tgls.length){el.innerHTML='<div class="kosong"><i class="ti ti-inbox"></i><div style="font-size:11px">Tidak ada data bulan ini.</div></div>';return;}
+  el.innerHTML=tgls.map(function(tgl){
+    var drivers=drvF?[drvF]:['Zakaria','Rahmat Hidayat'];
+    var drvHTML=drivers.map(function(drv){
+      var pes=DB.filter(function(p){return p.status!=='Batal'&&p.driver===drv&&p.tgl===tgl;});
+      var stor=SETOR.filter(function(s){return s.driver===drv&&s.tgl===tgl;});
+      if(!pes.length&&!stor.length)return'';
+      var totalPes=pes.reduce(function(s,p){return s+p.total;},0);
+      var totalStor=stor.filter(function(s){return s.status==='Dikonfirmasi';}).reduce(function(s,x){return s+x.jumlah;},0);
+      var selisih=totalStor-totalPes;
+      var av=drv==='Zakaria'?'av-b':'av-g',ini=drv==='Zakaria'?'ZK':'RH';
+      var dc=totalStor===0?'rd-belum':selisih===0?'rd-ok':selisih>0?'rd-lebih':'rd-kurang';
+      var dt=totalStor===0?'Belum disetor':selisih===0?'Sesuai':selisih>0?'Lebih '+fmtRp(selisih):'Kurang '+fmtRp(Math.abs(selisih));
+      var feeH=FEE_LOG.filter(function(f){return f.driver===drv&&f.tgl===tgl;}).reduce(function(s,f){return s+f.jumlah;},0);
+      var pesH=pes.length?'<div class="pm">'+pes.map(function(p){return'<div class="pm-item"><span style="color:var(--mt);font-size:10px">'+p.id+(p.mahasiswa?' MHS':'')+(p.tipe==='travel'?' ('+p.pnp+' pnp)':' ('+p.hari+' hr)')+'</span><span style="color:var(--pr);font-weight:700;font-size:10px">'+fmtRp(p.total)+'</span></div>';}).join('')+'</div>':'';
+      var storH=stor.map(function(s){var ok=s.status==='Dikonfirmasi',wt=s.status==='Menunggu';return'<div style="display:flex;align-items:center;gap:5px;padding:3px 0"><div style="flex:1;font-size:10px;color:var(--mt)">'+s.id+(s.keterangan?' · '+s.keterangan:'')+'</div><span style="font-size:10px;font-weight:700;color:'+(ok?'var(--sc)':wt?'#9a6b0a':'var(--dn)')+'">'+fmtRp(s.jumlah)+'</span>'+(wt?'<button style="font-size:8px;padding:2px 6px;border-radius:5px;background:var(--sc);color:#fff;border:none;cursor:pointer" onclick="konfirmSetor(\''+s.id+'\')">OK</button><button style="font-size:8px;padding:2px 6px;border-radius:5px;background:var(--dn);color:#fff;border:none;cursor:pointer;margin-left:2px" onclick="tolakSetor(\''+s.id+'\')">X</button>':'<span style="font-size:8px;padding:2px 5px;border-radius:5px;background:'+(ok?'#eafaf1':'#fdecea')+';color:'+(ok?'#1e7e44':'#a02020')+'">'+(ok?'OK':'Ditolak')+'</span>')+'</div>';}).join('');
+      return'<div style="margin-bottom:7px"><div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><div class="drv-av '+av+'" style="width:24px;height:24px;font-size:10px">'+ini+'</div><div style="font-size:11px;font-weight:600;flex:1">'+drv+'</div><span class="rd '+dc+'">'+dt+'</span></div>'+(pes.length?'<div style="font-size:9px;color:var(--mt);margin-bottom:2px">Pesanan ('+fmtRp(totalPes)+')</div>'+pesH:'<div style="font-size:9px;color:var(--mt)">Tidak ada pesanan</div>')+(stor.length?'<div style="font-size:9px;color:var(--mt);margin:4px 0 2px">Setoran</div>'+storH:'<div style="font-size:9px;color:var(--dn);margin-top:3px">Belum ada setoran</div>')+(feeH?'<div style="font-size:9px;color:#1e7e44;margin-top:4px;background:#eafaf1;border-radius:5px;padding:3px 7px">Fee driver: <strong>'+fmtRp(feeH)+'</strong></div>':'')+'</div>';
+    }).filter(Boolean).join('<div style="height:.5px;background:var(--bd);margin:5px 0"></div>');
+    if(!drvHTML)return'';
+    var allP=DB.filter(function(p){return p.status!=='Batal'&&p.tgl===tgl&&(!drvF||p.driver===drvF);}).reduce(function(s,p){return s+p.total;},0);
+    var allS=SETOR.filter(function(s){return s.status==='Dikonfirmasi'&&s.tgl===tgl&&(!drvF||s.driver===drvF);}).reduce(function(s,x){return s+x.jumlah;},0);
+    var ds=allS-allP,dst=allS===0?'rs-belum':ds===0?'rs-ok':ds>0?'rs-lebih':'rs-kurang',dstT=allS===0?'Belum disetor':ds===0?'Lunas':ds>0?'Lebih':'Kurang '+fmtRp(Math.abs(ds));
+    return'<div class="rekon-card"><div class="rekon-head"><span class="rekon-tgl">'+tgl+'</span><span class="rs-pill '+dst+'">'+dstT+'</span></div><div class="rekon-body">'+drvHTML+'</div></div>';
+  }).filter(Boolean).join('');
+}
+
+/* ── SERVIS ── */
+function pilihArm(n){curArm=n;document.getElementById('srv-tab1').className='atab'+(n===1?' active':'');document.getElementById('srv-tab2').className='atab'+(n===2?' active':'');var s=SRV_ST[n];document.getElementById('km-in').value=s.kmSaved||'';document.getElementById('km-saved').textContent=s.kmSaved?s.kmSaved.toLocaleString('id-ID')+' km':'-';document.getElementById('km-time').textContent=s.kmTime||'-';renderServis();}
+async function saveKM(){var v=parseInt(document.getElementById('km-in').value)||0;if(!v){T('Masukkan KM','err');return;}var s=SRV_ST[curArm];s.km=v;s.kmSaved=v;s.kmTime=new Date().toLocaleString('id-ID',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});document.getElementById('km-saved').textContent=v.toLocaleString('id-ID')+' km';document.getElementById('km-time').textContent=s.kmTime;await svSrv(curArm);T('KM tersimpan');renderServis();}
+function getKM(){return parseInt(document.getElementById('km-in').value)||SRV_ST[curArm].kmSaved||0;}
+function getStSrv(m,km){var s=SRV_ST[curArm],nx=s.nextKm[m.id];if(nx===null)return{st:'na',label:'Belum dicatat',nx:null};var sisa=nx-km;if(sisa<=0)return{st:'due',label:'Terlambat '+Math.abs(sisa).toLocaleString()+' km',nx};if(sisa<=m.warnAt)return{st:'warn',label:'Sisa '+sisa.toLocaleString()+' km',nx};return{st:'ok',label:'Sisa '+sisa.toLocaleString()+' km',nx};}
+function fKat(k,el){curKat=k;document.querySelectorAll('.ktab').forEach(function(b){b.classList.remove('active');});el.classList.add('active');renderServis();}
+function renderServis(){
+  var km=getKM(),list=curKat==='semua'?SRV_MASTER:SRV_MASTER.filter(function(m){return m.kat===curKat;});
+  var ok=0,warn=0,due=0;
+  SRV_MASTER.forEach(function(m){var r=getStSrv(m,km).st;if(r==='ok')ok++;else if(r==='warn')warn++;else if(r==='due')due++;});
+  document.getElementById('srv-ok').textContent=ok;document.getElementById('srv-warn').textContent=warn;document.getElementById('srv-due').textContent=due;
+  document.getElementById('srv-tbody').innerHTML=list.map(function(m){
+    var r=getStSrv(m,km);
+    return'<tr class="'+(r.st==='due'?'r-due':r.st==='warn'?'r-warn':'')+'"><td><span class="sdot sdot-'+r.st+'"></span></td><td style="min-width:100px"><span style="font-size:10px;font-weight:600;color:var(--tx);display:block">'+m.nama+'</span><span style="font-size:9px;color:'+m.color+'">'+m.kat+'</span></td><td><span style="font-size:10px;font-weight:600;color:var(--pr)">'+m.interval.toLocaleString()+'km</span><br><span style="font-size:8px;color:var(--mt)">Std:'+m.intervalStd.toLocaleString()+'</span></td><td><span style="font-size:10px;font-weight:600" class="'+(r.st==='ok'?'':r.st==='warn'?'':r.st==='due'?'':'')+'">'+( r.nx?r.nx.toLocaleString('id-ID')+' km':'-')+'</span><br><span style="font-size:8px;color:var(--mt)">'+r.label+'</span></td><td><span class="sspill ss-'+r.st+'">'+(r.st==='ok'?'Normal':r.st==='warn'?'Segera':r.st==='due'?'Terlambat':'Belum')+'</span></td><td><button class="btn-sc" onclick="openSrvModal(\''+m.id+'\')">Catat</button></td></tr>';
+  }).join('');
+  renderPiutang();
+}
+function openSrvModal(id){
+  var m=SRV_MASTER.find(function(x){return x.id===id;});var km=getKM();var s=SRV_ST[curArm];var last=s.riwayat[id]&&s.riwayat[id].length?s.riwayat[id][s.riwayat[id].length-1]:null;var sugNext=km+m.interval;
+  document.getElementById('m-title').textContent=m.nama;document.getElementById('m-sub').textContent=(curArm===1?'AB 7845 HH':'AB 7167 BE')+' · '+m.kat;
+  var b='<div style="background:var(--bg);border-radius:8px;padding:9px 11px;margin-bottom:9px;font-size:11px"><div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--mt)">KM saat ini</span><strong style="color:var(--pr)">'+km.toLocaleString()+' km</strong></div><div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--mt)">Interval travel</span><span>'+m.interval.toLocaleString()+' km</span></div>'+(last?'<div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--mt)">Terakhir</span><span>'+last.km.toLocaleString()+' km · '+last.tgl+'</span></div>':'')+(m.estBiaya?'<div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--mt)">Est. biaya</span><strong style="color:var(--dn)">'+fmtRp(m.estBiaya)+'</strong></div>':'')+'</div><div class="fg"><div class="fl">KM saat servis *</div><input class="fi" type="number" id="sv-km" value="'+km+'"></div><div class="fg"><div class="fl">KM servis berikutnya</div><input class="fi" type="number" id="sv-next" value="'+sugNext+'" oninput="var v=parseInt(this.value)||0;var el=document.getElementById(\'sv-lbl\');if(el)el.textContent=v.toLocaleString();"></div><div style="background:var(--pr);border-radius:7px;padding:7px 11px;margin-bottom:8px;font-size:10px;color:#fff">Berikutnya: <strong id="sv-lbl" style="color:var(--ac)">'+sugNext.toLocaleString()+' km</strong></div><div class="fg"><div class="fl">Tanggal servis</div><input class="fi" type="date" id="sv-tgl" value="'+today+'"></div><div class="fg"><div class="fl">Bengkel / Mekanik</div><input class="fi" type="text" id="sv-bengkel" placeholder="Nama bengkel"></div><div class="fg"><div class="fl">Biaya Servis (Rp)</div><input class="fi" type="number" id="sv-biaya" value="'+(m.estBiaya||0)+'"></div><div class="fg"><div class="fl">Catatan</div><textarea class="fi" id="sv-cat" rows="2" placeholder="Temuan, merek suku cadang..."></textarea></div><button class="btn-pr" onclick="simpanSrv(\''+id+'\')">Simpan & Sinkron ke Laporan</button>';
+  document.getElementById('m-body').innerHTML=b;document.getElementById('mov').classList.remove('h');
+}
+async function simpanSrv(id){
+  var m=SRV_MASTER.find(function(x){return x.id===id;});var kmS=parseInt(document.getElementById('sv-km').value)||0;var kmN=parseInt(document.getElementById('sv-next').value)||0;
+  if(!kmS||!kmN||kmN<=kmS){T('KM tidak valid','err');return;}
+  var tgl=document.getElementById('sv-tgl').value,bengkel=document.getElementById('sv-bengkel').value.trim(),biaya=parseInt(document.getElementById('sv-biaya').value)||0,cat=document.getElementById('sv-cat').value.trim();
+  var s=SRV_ST[curArm];if(!s.riwayat[id])s.riwayat[id]=[];s.riwayat[id].push({km:kmS,nextKm:kmN,tgl,bengkel,biaya,catatan:cat});s.nextKm[id]=kmN;
+  await svSrv(curArm);
+  if(biaya>0){var b={id:'BY-'+String(BCTR++).padStart(3,'0'),kategori:'Servis / Perawatan',tgl,nama:m.nama+(bengkel?' di '+bengkel:''),jumlah:biaya};BIAYA.unshift(b);await svB(b);}
+  await addLog('sistem','Servis dicatat - '+m.nama,(curArm===1?'AB 7845 HH':'AB 7167 BE'),'#1abc9c');
+  closeM();renderServis();renderLaporan();T(m.nama+' dicatat. Berikutnya: '+kmN.toLocaleString()+' km');
+}
+
+/* ── PIUTANG ── */
+function renderPiutang(){
+  var list=DB.filter(function(p){return p.tipe==='rental'&&p.status!=='Batal'&&p.sisa>0;});
+  var el=document.getElementById('piutang-list');var jt=0;
+  if(!list.length){el.innerHTML='<div class="kosong"><i class="ti ti-check"></i><div style="font-size:11px">Tidak ada piutang.</div></div>';document.getElementById('db-piutang').textContent=0;return;}
+  el.innerHTML=list.map(function(p){var diff=p.jatuhTempo?(new Date(p.jatuhTempo)-new Date())/864e5:null;var bc=diff===null?'jt-aman':diff<0?'jt-lewat':diff<=3?'jt-dekat':'jt-aman';var bt=diff===null?'Tanpa JT':diff<0?'Lewat '+Math.abs(Math.round(diff))+'hr':diff<=3?'JT '+Math.round(diff)+'hr':'Normal';if(diff!==null&&diff<=3)jt++;return'<div class="card" style="margin-bottom:7px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px"><div><div style="font-size:11px;font-weight:600">'+p.id+' · '+p.nama+'</div><div style="font-size:10px;color:var(--mt)">'+p.mulai+' - '+p.selesai+' · '+p.driver+'</div></div><span class="piutang-badge '+bc+'">'+bt+'</span></div><div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;font-weight:700"><span>Sisa Bayar</span><span style="color:var(--dn)">'+fmtRp(p.sisa)+'</span></div></div>';}).join('');
+  document.getElementById('db-piutang').textContent=jt;
+}
+
+/* ── CARD PESANAN ── */
+function sCls(s){return s==='Jalan'?'p-j':s==='Selesai'?'p-s':s==='Batal'?'p-b':'p-p';}
+function cardHTML(p){
+  var rows='';
+  if(p.tipe==='travel'){rows='<div class="prow"><i class="ti ti-calendar"></i><span class="prow-v">'+p.tgl+(p.jadwal?' · '+p.jadwal:'')+'</span></div>'+(p.seats&&p.seats.length?'<div class="prow"><i class="ti ti-armchair"></i><span class="prow-v">Kursi '+p.seats.join(', ')+'</span></div>':'')+'<div class="prow"><i class="ti ti-user"></i><span class="prow-v">'+p.driver+' · '+p.armStr+'</span></div>'+(p.mahasiswa?'<div class="prow"><i class="ti ti-school"></i><span class="prow-v" style="color:#6b21a8">Mahasiswa · Diskon '+fmtRp(DIS_MHS)+'/kursi</span></div>':'')+(p.bandara?'<div class="prow"><i class="ti ti-plane"></i><span class="prow-v">Antar/Jemput Bandara</span></div>':'');}
+  else{rows='<div class="prow"><i class="ti ti-calendar"></i><span class="prow-v">'+p.mulai+' - '+p.selesai+'</span></div><div class="prow"><i class="ti ti-moon"></i><span class="prow-v">'+p.hari+' hari · '+p.tipe_rental+'</span></div><div class="prow"><i class="ti ti-user"></i><span class="prow-v">'+p.driver+' · '+p.armStr+'</span></div><div class="prow"><i class="ti ti-coin"></i><span class="prow-v">DP: '+(p.dp>0?fmtRp(p.dp):'Belum')+(p.jatuhTempo?' · JT: '+p.jatuhTempo:'')+'</span></div><div class="prow"><i class="ti ti-cash"></i><span class="prow-v" style="'+(p.sisa>0?'color:var(--dn);font-weight:700':'color:var(--sc);font-weight:700')+'">'+(p.sisa===0?'Lunas':'Sisa: '+fmtRp(p.sisa))+'</span></div>';}
+  var eBtn=p.status!=='Batal'&&p.status!=='Selesai'?'<button onclick="openEdit(\''+p.id+'\')" class="abtn abtn-e">Edit</button>':'';
+  var jBtn=p.status==='Menunggu'?'<button onclick="setStatus(\''+p.id+'\',\'Jalan\')" class="abtn abtn-j">Jalan</button>':'';
+  var sBtn=p.status==='Jalan'?'<button onclick="setStatus(\''+p.id+'\',\'Selesai\')" class="abtn abtn-s">Selesai</button>':'';
+  var icoC=p.rute&&p.rute.includes('Rao')?'ico-g':p.rute&&(p.rute.includes('Panjang')||p.rute.includes('Bukit'))?'ico-w':'ico-b';
+  var icoClr=p.rute&&p.rute.includes('Rao')?'#27ae60':p.rute&&(p.rute.includes('Panjang')||p.rute.includes('Bukit'))?'#b7770d':'#2980b9';
+  return'<div class="pcard"><div class="pcard-head"><div class="pcard-ico '+icoC+'"><i class="ti '+(p.tipe==='rental'?'ti-car':'ti-bus')+'" style="color:'+icoClr+'"></i></div><div class="pcard-htxt"><div class="pcard-id">'+p.id+'</div><div class="pcard-rute">'+p.rute+'</div><span class="pcard-badge '+(p.tipe==='travel'?'badge-tv':'badge-rt')+'">'+(p.tipe==='travel'?'Travel':'Rental')+'</span>'+(p.mahasiswa?' <span class="pcard-badge badge-mhs">MHS</span>':'')+'</div><div class="pcard-right"><div class="pcard-price">'+fmtRp(p.total)+'</div><div class="pill '+sCls(p.status)+'">'+p.status+'</div></div></div><div class="pcard-rows">'+rows+'</div><div class="pcard-divider"></div><div class="pcard-chips"><span class="chip" onclick="cpTxt(\''+p.nama+'\')"><i class="ti ti-user"></i>'+p.nama+'</span>'+(p.hp?'<span class="chip" onclick="cpTxt(\''+p.hp+'\')"><i class="ti ti-phone"></i>'+p.hp+'</span>':'')+'</div>'+(eBtn||jBtn||sBtn?'<div class="pcard-actions">'+eBtn+jBtn+sBtn+'</div>':'')+'</div>';
+}
+function cpTxt(t){try{navigator.clipboard.writeText(t).then(function(){T('Tersalin: '+t);});}catch(e){T('Tersalin: '+t);}}
+function renderP(){var tgl=document.getElementById('fil-tgl').value,drv=document.getElementById('fil-drv').value;var data=DB.filter(function(p){if(fStat&&p.status!==fStat)return false;if(tgl&&p.tgl!==tgl&&!(p.tipe==='rental'&&getTglR(p).indexOf(tgl)!==-1))return false;if(drv&&p.driver!==drv)return false;return true;});var el=document.getElementById('pesanan-list');el.innerHTML=data.length?data.map(cardHTML).join(''):'<div class="kosong"><i class="ti ti-inbox"></i><div style="font-size:11px">Tidak ada pesanan.</div></div>';}
+
+/* ── EDIT PESANAN ── */
+function openEdit(id){
+  var p=DB.find(function(x){return x.id===id;});if(!p)return;eSel=p.seats?p.seats.slice():[];
+  document.getElementById('m-title').textContent='Edit Pesanan';document.getElementById('m-sub').textContent=p.id;
+  var body=document.getElementById('m-body');
+  if(p.tipe==='travel'){
+    body.innerHTML='<div class="fg"><div class="fl">Nama</div><input class="fi" id="e-nama" value="'+escH(p.nama)+'"></div><div class="fg"><div class="fl">No. HP</div><input class="fi" id="e-hp" value="'+escH(p.hp||'')+'"></div><div class="fg"><div class="fl">Tanggal</div><input class="fi" type="date" id="e-tgl" value="'+p.tgl+'"></div>'+(p.jadwal?'<div class="fg"><div class="fl">Jadwal</div><select class="fi" id="e-jdw"><option'+(p.jadwal.includes('10')?' selected':'')+'>10.00 - Pagi</option><option'+(p.jadwal.includes('17')?' selected':'')+'>17.00 - Sore</option></select></div>':'')+'<div class="fg"><div class="fl">Catatan</div><textarea class="fi" id="e-cat" rows="2">'+escH(p.catatan||'')+'</textarea></div><button class="btn-pr" onclick="saveEdit(\''+id+'\')">Simpan</button><button class="btn-dn" onclick="batalkan(\''+id+'\')">Batalkan Pesanan</button>';
+  }else{
+    body.innerHTML='<div class="fg"><div class="fl">Nama</div><input class="fi" id="e-nama" value="'+escH(p.nama)+'"></div><div class="fg"><div class="fl">Update DP (Rp)</div><input class="fi" type="number" id="e-dp" value="'+(p.dp||0)+'" oninput="var dp=parseInt(this.value)||0;var el=document.getElementById(\'e-dp-s\');if(el)el.textContent=fmtRp(dp);"></div><div class="fg"><div class="fl">Jatuh Tempo</div><input class="fi" type="date" id="e-jt" value="'+(p.jatuhTempo||'')+'"></div><div style="background:var(--pr);border-radius:7px;padding:8px 11px;margin-bottom:7px"><div class="dp-row"><span class="dp-lbl">Total</span><span class="dp-val">'+fmtRp(p.total)+'</span></div><div class="dp-row"><span class="dp-lbl">DP</span><span class="dp-val" id="e-dp-s">'+fmtRp(p.dp)+'</span></div><div class="dp-divider"></div><div class="dp-row"><span class="dp-lbl-t">Sisa Bayar</span><span class="dp-val-t" id="e-sisa-s">'+fmtRp(p.sisa)+'</span></div></div><div class="fg"><div class="fl">Catatan</div><textarea class="fi" id="e-cat" rows="2">'+escH(p.catatan||'')+'</textarea></div><button class="btn-pr" onclick="saveEdit(\''+id+'\')">Simpan</button><button class="btn-dn" onclick="batalkan(\''+id+'\')">Batalkan</button>';
+  }
+  document.getElementById('mov').classList.remove('h');
+}
+async function saveEdit(id){
+  var p=DB.find(function(x){return x.id===id;});if(!p)return;
+  var eN=document.getElementById('e-nama');if(eN&&eN.value.trim())p.nama=eN.value.trim();
+  var eH=document.getElementById('e-hp');if(eH)p.hp=eH.value.trim();
+  var eT=document.getElementById('e-tgl');if(eT&&eT.value)p.tgl=eT.value;
+  var eJ=document.getElementById('e-jdw');if(eJ)p.jadwal=eJ.value;
+  var eC=document.getElementById('e-cat');if(eC)p.catatan=eC.value;
+  var eDp=document.getElementById('e-dp');if(eDp){p.dp=parseInt(eDp.value)||0;p.sisa=Math.max(0,p.total-p.dp);}
+  var eJt=document.getElementById('e-jt');if(eJt)p.jatuhTempo=eJt.value;
+  await svP(p);await addLog('pesanan','Edit pesanan '+id,p.nama,'#e8a020');closeM();renderAll();T('Pesanan diperbarui!');
+}
+async function batalkan(id){
+  var p=DB.find(function(x){return x.id===id;});
+  if(p&&confirm('Batalkan pesanan '+id+'?')){p.status='Batal';await svP(p);await addLog('pesanan','Pesanan dibatalkan '+id,p.nama,'#e74c3c');closeM();renderAll();T('Pesanan dibatalkan','err');}
+}
+function closeM(){document.getElementById('mov').classList.add('h');eSel=[];}
+
+/* ── KONTROL ── */
+function filterLog(f,el){logFilter=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});el.classList.add('active');renderKontrol();}
+function renderKontrol(){
+  var data=logFilter==='semua'?LOGS:LOGS.filter(function(l){return l.tipe===logFilter;});
+  var el=document.getElementById('log-list');
+  el.innerHTML=data.slice(0,25).map(function(l){return'<div class="log-item"><div class="log-dot" style="background:'+l.color+'"></div><div><div style="font-size:10px;font-weight:600;color:var(--tx)">'+l.aksi+'</div><div style="font-size:9px;color:var(--mt)">'+l.det+'</div><div style="font-size:9px;color:var(--mt)">'+l.waktu+'</div></div></div>';}).join('')||'<div style="font-size:10px;color:var(--mt);text-align:center;padding:10px">Belum ada log.</div>';
+  var sk=SETOR.filter(function(s){return s.status==='Menunggu';});
+  var skEl=document.getElementById('setor-konfirm-list');
+  skEl.innerHTML=sk.length?sk.map(function(s){return'<div class="card" style="margin-bottom:7px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px"><div><div style="font-size:11px;font-weight:600">'+s.id+' · '+s.driver+'</div><div style="font-size:10px;color:var(--mt)">'+s.tgl+(s.keterangan?' · '+s.keterangan:'')+'</div></div><div style="font-size:12px;font-weight:700;color:var(--sc)">'+fmtRp(s.jumlah)+'</div></div><div style="display:flex;gap:6px"><button onclick="konfirmSetor(\''+s.id+'\')" style="flex:1;padding:6px;border-radius:7px;background:var(--sc);color:#fff;border:none;font-size:10px;font-weight:600;cursor:pointer">Konfirmasi + Hitung Fee</button><button onclick="tolakSetor(\''+s.id+'\')" style="flex:1;padding:6px;border-radius:7px;background:var(--dn);color:#fff;border:none;font-size:10px;font-weight:600;cursor:pointer">Tolak</button></div></div>';}).join(''):'<div class="kosong"><i class="ti ti-check"></i><div style="font-size:11px">Semua setoran sudah dikonfirmasi.</div></div>';
+  var lEl=document.getElementById('locked-list');
+  lEl.innerHTML=LOCKS2.length?LOCKS2.map(function(l){return'<div style="background:var(--cd);border:.5px solid var(--bd);border-radius:9px;padding:9px 12px;margin-bottom:5px"><div style="font-size:11px;font-weight:600">Terkunci: '+l.period+' · '+l.tgl+'</div></div>';}).join(''):'<div class="kosong"><i class="ti ti-lock-open"></i><div style="font-size:11px">Belum ada laporan terkunci.</div></div>';
+}
+
+/* ── DASHBOARD ── */
+function renderDash(){
+  var bln=today.slice(0,7);
+  var aktif=DB.filter(function(p){return p.status==='Menunggu'||p.status==='Jalan';}).length;
+  var tot=DB.filter(function(p){return p.status!=='Batal'&&p.tgl&&p.tgl.startsWith(bln);}).reduce(function(s,p){return s+p.total;},0);
+  var zak=DB.filter(function(p){return p.driver==='Zakaria'&&p.status!=='Batal'&&p.tgl&&p.tgl.startsWith(bln);}).reduce(function(s,p){return s+p.total;},0);
+  var rah=DB.filter(function(p){return p.driver==='Rahmat Hidayat'&&p.status!=='Batal'&&p.tgl&&p.tgl.startsWith(bln);}).reduce(function(s,p){return s+p.total;},0);
+  var setor=SETOR.filter(function(s){return s.status==='Dikonfirmasi'&&s.tgl.startsWith(bln);}).reduce(function(s,x){return s+x.jumlah;},0);
+  var biaya=BIAYA.filter(function(b){return b.tgl&&b.tgl.startsWith(bln);}).reduce(function(s,b){return s+b.jumlah;},0);
+  document.getElementById('db-aktif').textContent=aktif;document.getElementById('db-tot').textContent=fmtRp(tot);document.getElementById('db-zak').textContent=fmtRp(zak);document.getElementById('db-rah').textContent=fmtRp(rah);document.getElementById('db-setor-j').textContent=fmtRp(setor);document.getElementById('db-laba').textContent=fmtRp(tot-biaya);
+  var f1=getFee('Zakaria'),f2=getFee('Rahmat Hidayat');document.getElementById('db-fee').textContent=fmtRp(f1+f2);
+  document.getElementById('db-log').innerHTML=LOGS.slice(0,4).map(function(l){return'<div class="log-item"><div class="log-dot" style="background:'+l.color+'"></div><div><div style="font-size:10px;font-weight:600;color:var(--tx)">'+l.aksi+'</div><div style="font-size:9px;color:var(--mt)">'+l.waktu+'</div></div></div>';}).join('')||'<div style="font-size:10px;color:var(--mt);text-align:center;padding:10px">Belum ada aktivitas.</div>';
+}
+
+/* ── NAV ── */
+function SW(name,el){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('pg-'+name).classList.add('active');el.classList.add('active');if(name==='pesanan')renderP();if(name==='dashboard')renderDash();if(name==='setoran')renderRekon();if(name==='laporan')renderLaporan();if(name==='armada')renderServis();if(name==='gaji')renderGaji();if(name==='kontrol')renderKontrol();}
+function SWN(name){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('pg-'+name).classList.add('active');document.querySelectorAll('.tab').forEach(function(t){if(t.getAttribute('onclick')&&t.getAttribute('onclick').indexOf("'"+name+"'")!==-1)t.classList.add('active');});if(name==='pesanan')renderP();if(name==='dashboard')renderDash();if(name==='setoran')renderRekon();if(name==='laporan')renderLaporan();if(name==='armada')renderServis();if(name==='gaji')renderGaji();if(name==='kontrol')renderKontrol();}
+function swType(t){var isT=t==='travel';document.getElementById('f-travel').style.display=isT?'block':'none';document.getElementById('f-rental').style.display=isT?'none':'block';document.getElementById('tb-tv').className='tbtn'+(isT?' active':'');document.getElementById('tb-rt').className='tbtn'+(!isT?' active':'');}
+function renderAll(){renderDash();renderP();renderLaporan();renderGaji();renderRekon();}
+
+document.getElementById('mov').addEventListener('click',function(e){if(e.target===this)closeM();});
+document.getElementById('rek-bln').value=today.slice(0,7);
+document.getElementById('b-tgl').value=today;
+document.getElementById('sim-tgl').value=today;
+onRC();redrawFS();pilihArm(1);
+</script>
+</body>
+</html>
