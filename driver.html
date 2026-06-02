@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>HAMCO TRANS — APK Driver</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--pr:#1a3a5c;--ac:#e8a020;--bg:#f4f6fa;--cd:#fff;--tx:#1a2233;--mt:#6b7a99;--bd:rgba(26,58,92,0.12);--sc:#27ae60;--dn:#e74c3c;--warn:#f39c12}
+body{background:var(--bg);font-family:'Segoe UI',sans-serif;font-size:13px;min-height:100vh;display:flex;justify-content:center}
+.frame{width:100%;max-width:430px;background:var(--bg);min-height:100vh}
+.pin-screen{position:fixed;inset:0;background:var(--pr);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;padding:24px}
+.pin-screen.h{display:none}
+.pin-logo{background:var(--ac);color:var(--pr);font-weight:800;font-size:20px;border-radius:10px;padding:8px 18px;margin-bottom:8px}
+.pin-dots{display:flex;gap:14px;margin-bottom:22px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.4);transition:all .2s}
+.pin-dot.filled{background:var(--ac);border-color:var(--ac)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:220px}
+.pin-btn{height:56px;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;font-size:20px;font-weight:600;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pin-btn:active{background:rgba(255,255,255,.3)}
+.pin-err{color:var(--dn);font-size:11px;margin-top:8px;min-height:16px;text-align:center}
+.topbar{background:var(--pr);color:#fff;padding:12px 14px 9px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo-box{background:var(--ac);color:var(--pr);font-weight:700;font-size:12px;border-radius:6px;padding:3px 8px}
+.drv-chip{background:rgba(255,255,255,.15);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;color:#fff}
+.tabs{display:flex;background:var(--pr);position:sticky;top:52px;z-index:99}
+.tab{flex:1;text-align:center;padding:7px 4px 6px;font-size:8px;color:rgba(255,255,255,.5);cursor:pointer;border-bottom:2px solid transparent;display:flex;flex-direction:column;align-items:center;gap:1px}
+.tab i{font-size:13px}
+.tab.active{color:var(--ac);border-bottom:2px solid var(--ac)}
+.pg{display:none;padding:12px;padding-bottom:80px}
+.pg.active{display:block}
+.sec{font-size:10px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;margin-top:12px}
+.sec:first-child{margin-top:0}
+.card{background:var(--cd);border-radius:12px;border:.5px solid var(--bd);padding:12px 13px;margin-bottom:8px}
+.banner{border-radius:12px;padding:14px;margin-bottom:10px;color:#fff}
+.bn-zk{background:linear-gradient(135deg,#1a3a5c,#2563a8)}
+.bn-rh{background:linear-gradient(135deg,#1a5c3a,#27ae60)}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:10px}
+.st{background:var(--cd);border-radius:9px;padding:9px 11px;border:.5px solid var(--bd)}
+.slbl{font-size:10px;color:var(--mt);margin-bottom:2px}
+.sv{font-size:15px;font-weight:700}
+.sv.g{color:var(--sc)}.sv.a{color:var(--ac)}.sv.b{color:#2980b9}.sv.r{color:var(--dn)}
+.fi{border:.5px solid var(--bd);border-radius:7px;padding:8px 10px;font-size:12px;background:var(--cd);color:var(--tx);width:100%}
+.fi:focus{outline:none;border-color:var(--pr)}
+.fg{display:flex;flex-direction:column;gap:3px;margin-bottom:7px}
+.fl{font-size:11px;font-weight:500;color:var(--mt)}
+.btn-pr{width:100%;background:var(--pr);color:#fff;border:none;border-radius:9px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;margin-top:3px}
+.btn-sc{width:100%;background:var(--sc);color:#fff;border:none;border-radius:9px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;margin-top:3px}
+.btn-dn{width:100%;background:var(--dn);color:#fff;border:none;border-radius:9px;padding:9px;font-size:11px;font-weight:600;cursor:pointer;margin-top:5px}
+.pcard{background:var(--cd);border:.5px solid var(--bd);border-radius:11px;padding:11px 12px;margin-bottom:7px}
+.pcard-head{display:flex;align-items:flex-start;gap:9px;margin-bottom:7px}
+.pcard-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.ico-b{background:#eaf4fb}.ico-g{background:#eafaf1}
+.pcard-htxt{flex:1;min-width:0}
+.pcard-id{font-size:10px;font-weight:600;color:var(--mt)}
+.pcard-rute{font-size:12px;font-weight:700;color:var(--tx);margin-top:1px}
+.pcard-badge{display:inline-block;font-size:9px;font-weight:600;padding:2px 6px;border-radius:20px;margin-top:2px}
+.badge-tv{background:#eaf4fb;color:#1a6fa0}.badge-rt{background:#eafaf1;color:#1e7e44}
+.pcard-right{text-align:right;flex-shrink:0}
+.pcard-price{font-size:12px;font-weight:700;color:var(--pr)}
+.pill{font-size:8px;padding:2px 6px;border-radius:20px;display:inline-block;font-weight:500;margin-top:2px}
+.p-j{background:#eafaf1;color:#1e7e44}.p-s{background:#eaf4fb;color:#1a6fa0}.p-p{background:#fef9e7;color:#9a6b0a}.p-b{background:#fdecea;color:#a02020}
+.prow{display:flex;align-items:center;gap:6px;font-size:10px;margin-bottom:2px}
+.prow i{font-size:11px;color:var(--mt);flex-shrink:0;width:13px;text-align:center}
+.prow-v{color:var(--tx);font-weight:500;flex:1}
+.btn-row{display:flex;gap:6px;margin-top:8px}
+.abtn{flex:1;padding:7px;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer;text-align:center;border:none}
+.abtn-mulai{background:var(--sc);color:#fff}
+.abtn-selesai{background:#2980b9;color:#fff}
+.divider{height:.5px;background:var(--bd);margin:8px 0}
+.chip-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:#f0f2f6;border:.5px solid var(--bd);border-radius:20px;padding:3px 10px;font-size:10px;color:var(--tx);cursor:pointer;font-weight:500}
+.chip.mhs{background:#f3e8ff;border-color:#c084fc;color:#6b21a8}
+
+/* SETORAN BERSIH */
+.setor-box{background:var(--pr);border-radius:11px;padding:13px;margin-bottom:10px;color:#fff}
+.sb-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px}
+.sb-lbl{color:rgba(255,255,255,.65)}
+.sb-val{font-weight:600;color:#fff}
+.sb-divider{height:.5px;background:rgba(255,255,255,.15);margin:6px 0}
+.biaya-item-row{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);border-radius:8px;padding:8px 10px;margin-bottom:5px}
+.biaya-item-row input{flex:1;background:rgba(255,255,255,.15);border:none;border-radius:6px;padding:6px 9px;font-size:11px;color:#fff;outline:none}
+.biaya-item-row input::placeholder{color:rgba(255,255,255,.5)}
+.biaya-item-row .del-btn{background:rgba(231,76,60,.4);border:none;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.tambah-biaya-btn{background:rgba(255,255,255,.1);border:1px dashed rgba(255,255,255,.3);border-radius:8px;padding:7px;width:100%;color:rgba(255,255,255,.8);font-size:10px;font-weight:600;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:5px}
+.bersih-box{background:var(--ac);border-radius:9px;padding:10px 12px;margin-top:7px}
+.bersih-row{display:flex;justify-content:space-between;align-items:center;font-size:11px}
+.bersih-total{display:flex;justify-content:space-between;align-items:center;padding-top:6px;margin-top:4px;border-top:1px solid rgba(26,58,92,.2)}
+
+.fee-box{background:#eafaf1;border:.5px solid #a9dfbf;border-radius:9px;padding:10px 12px;margin-bottom:8px}
+.fee-title{font-size:10px;font-weight:600;color:#1e7e44;margin-bottom:5px}
+.fee-item{display:flex;justify-content:space-between;font-size:10px;padding:2px 0}
+.fee-total{display:flex;justify-content:space-between;font-size:11px;font-weight:700;padding-top:5px;margin-top:3px;border-top:.5px solid #a9dfbf;color:#1e7e44}
+.gaji-box{background:var(--cd);border:.5px solid var(--bd);border-radius:11px;padding:12px 13px;margin-bottom:8px}
+.gaji-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:.5px solid var(--bd)}
+.gaji-row:last-child{border-bottom:none}
+.setor-hist{background:var(--cd);border:.5px solid var(--bd);border-radius:9px;padding:10px 12px;margin-bottom:6px}
+.sh-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.sh-id{font-size:10px;font-weight:600;color:var(--mt)}
+.sh-jml{font-size:12px;font-weight:700;color:var(--pr)}
+.sh-status{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px}
+.ss-ok{background:#eafaf1;color:#1e7e44}.ss-wt{background:#fef9e7;color:#9a6b0a}.ss-no{background:#fdecea;color:#a02020}
+.biaya-rincian{background:#fff8f0;border:.5px solid #f0c090;border-radius:7px;padding:7px 10px;margin-top:5px}
+.br-item{display:flex;justify-content:space-between;font-size:10px;padding:2px 0;border-bottom:.5px dashed #f0d0a0}
+.br-item:last-child{border-bottom:none}
+.kosong{text-align:center;padding:22px 12px;color:var(--mt)}
+.kosong i{font-size:32px;display:block;margin-bottom:8px;opacity:.3}
+.sync-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:500}
+.sync-badge.ok{color:#2ecc71}.sync-badge.syncing{color:var(--warn)}.sync-badge.error{color:var(--dn)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:#fff;padding:8px 16px;border-radius:30px;font-size:11px;font-weight:500;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div id="pin-screen" class="pin-screen">
+  <div class="pin-logo">HT</div>
+  <div style="color:#fff;font-size:14px;font-weight:600;margin-bottom:3px">HAMCO TRANS</div>
+  <div style="color:rgba(255,255,255,.55);font-size:10px;margin-bottom:22px">APK Driver — Masukkan PIN</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-pad">
+    <button class="pin-btn" onclick="pinI('1')">1</button><button class="pin-btn" onclick="pinI('2')">2</button><button class="pin-btn" onclick="pinI('3')">3</button>
+    <button class="pin-btn" onclick="pinI('4')">4</button><button class="pin-btn" onclick="pinI('5')">5</button><button class="pin-btn" onclick="pinI('6')">6</button>
+    <button class="pin-btn" onclick="pinI('7')">7</button><button class="pin-btn" onclick="pinI('8')">8</button><button class="pin-btn" onclick="pinI('9')">9</button>
+    <button class="pin-btn" onclick="pinI('0')">0</button>
+    <button class="pin-btn" onclick="pinD()"><i class="ti ti-backspace"></i></button>
+  </div>
+  <div class="pin-err" id="pin-err"></div>
+</div>
+
+<div class="frame">
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:7px">
+    <div class="logo-box">HT</div>
+    <div>
+      <div style="font-size:13px;font-weight:600">HAMCO TRANS</div>
+      <span id="sync-status" class="sync-badge syncing"><i class="ti ti-cloud-upload" style="font-size:10px"></i>Menghubungkan...</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:7px">
+    <div class="drv-chip" id="drv-chip">Driver</div>
+    <button onclick="logout()" style="background:rgba(255,255,255,.1);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+      <i class="ti ti-logout" style="font-size:13px;color:#fff"></i>
+    </button>
+  </div>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="SW('jadwal',this)"><i class="ti ti-calendar"></i>Jadwal</div>
+  <div class="tab" onclick="SW('setoran',this)"><i class="ti ti-cash"></i>Setoran</div>
+  <div class="tab" onclick="SW('riwayat',this)"><i class="ti ti-history"></i>Riwayat</div>
+  <div class="tab" onclick="SW('gaji',this)"><i class="ti ti-wallet"></i>Gaji</div>
+</div>
+
+<!-- JADWAL -->
+<div id="pg-jadwal" class="pg active">
+  <div id="drv-banner" class="banner bn-zk">
+    <div style="font-size:9px;opacity:.7">Selamat datang</div>
+    <div style="font-size:18px;font-weight:700;margin:3px 0" id="drv-nama">-</div>
+    <div style="font-size:10px;opacity:.75" id="drv-armada">-</div>
+    <div style="margin-top:8px;display:flex;gap:10px">
+      <div><div style="font-size:8px;opacity:.7">Hari Ini</div><div style="font-size:16px;font-weight:700;color:var(--ac)" id="jdw-cnt">0</div></div>
+      <div><div style="font-size:8px;opacity:.7">Total</div><div style="font-size:16px;font-weight:700;color:var(--ac)" id="jdw-total">Rp 0</div></div>
+    </div>
+  </div>
+  <div class="sg">
+    <div class="st"><div class="slbl">Aktif</div><div class="sv a" id="s-aktif">0</div></div>
+    <div class="st"><div class="slbl">Selesai</div><div class="sv g" id="s-selesai">0</div></div>
+    <div class="st"><div class="slbl">Fee Hari Ini</div><div class="sv b" id="s-fee-hari">Rp 0</div></div>
+    <div class="st"><div class="slbl">Total Fee</div><div class="sv a" id="s-fee-tot">Rp 0</div></div>
+  </div>
+  <div class="sec">Jadwal Hari Ini — <span id="tgl-today"></span></div>
+  <div id="jadwal-list"><div class="kosong"><i class="ti ti-loader"></i><div>Memuat jadwal...</div></div></div>
+  <div class="sec">Jadwal Mendatang</div>
+  <div id="jadwal-mendatang"></div>
+</div>
+
+<!-- SETORAN -->
+<div id="pg-setoran" class="pg">
+  <!-- RINGKASAN -->
+  <div class="setor-box">
+    <div style="font-size:9px;opacity:.7;margin-bottom:3px">Ringkasan Setoran Saya</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px">
+      <div><div style="font-size:8px;opacity:.7">Total Kotor</div><div style="font-size:16px;font-weight:700;color:#fff" id="tot-kotor">Rp 0</div></div>
+      <div style="text-align:right"><div style="font-size:8px;opacity:.7">Total Biaya</div><div style="font-size:14px;font-weight:700;color:var(--dn)" id="tot-biaya-drv">Rp 0</div></div>
+      <div style="text-align:right"><div style="font-size:8px;opacity:.7">Bersih ke Admin</div><div style="font-size:16px;font-weight:700;color:var(--ac)" id="tot-bersih">Rp 0</div></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div><div style="font-size:8px;opacity:.7">Dikonfirmasi</div><div style="font-size:11px;font-weight:700;color:#2ecc71" id="setor-ok">Rp 0</div></div>
+      <div><div style="font-size:8px;opacity:.7">Menunggu</div><div style="font-size:11px;font-weight:700;color:var(--warn)" id="setor-wt">Rp 0</div></div>
+    </div>
+  </div>
+
+  <!-- FORM SETORAN BARU -->
+  <div class="sec">Kirim Setoran Baru</div>
+  <div class="card">
+    <div class="fg"><div class="fl">Tanggal Setoran *</div><input class="fi" type="date" id="s-tgl"></div>
+    <div class="fg"><div class="fl">Jumlah Setoran Kotor (Rp) *</div><input class="fi" type="number" id="s-jml" placeholder="Total pendapatan sebelum dipotong biaya" oninput="hitSetor()"></div>
+
+    <!-- BIAYA PERJALANAN -->
+    <div style="background:#f4f6fa;border-radius:9px;padding:10px 12px;margin-bottom:8px">
+      <div style="font-size:10px;font-weight:600;color:var(--mt);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Biaya Perjalanan (potong dari setoran)</div>
+      <div id="biaya-list-input"></div>
+      <button class="tambah-biaya-btn" onclick="tambahBiayaRow()" style="background:#eaf4fb;border:1px dashed #b5d4f4;border-radius:8px;padding:7px;width:100%;color:#1a3a5c;font-size:10px;font-weight:600;cursor:pointer;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:5px">
+        <i class="ti ti-plus" style="font-size:12px"></i> Tambah Biaya
+      </button>
+    </div>
+
+    <!-- PREVIEW BERSIH -->
+    <div id="setor-preview" style="display:none">
+      <div style="background:var(--pr);border-radius:9px;padding:11px 13px;margin-bottom:8px">
+        <div style="font-size:9px;color:rgba(255,255,255,.7);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Rincian Setoran</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:rgba(255,255,255,.65)">Setoran Kotor</span><span style="color:#fff;font-weight:600" id="prev-kotor">Rp 0</span></div>
+        <div id="prev-biaya-rows"></div>
+        <div style="height:.5px;background:rgba(255,255,255,.2);margin:6px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:rgba(255,255,255,.65)">Total Biaya</span><span style="color:var(--dn);font-weight:700" id="prev-tot-biaya">Rp 0</span></div>
+        <div style="height:.5px;background:rgba(255,255,255,.2);margin:6px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;font-weight:700"><span style="color:var(--ac)">Setoran Bersih ke Admin</span><span style="color:var(--ac)" id="prev-bersih">Rp 0</span></div>
+      </div>
+    </div>
+
+    <div class="fg"><div class="fl">Keterangan</div><input class="fi" type="text" id="s-ket" placeholder="Contoh: Setoran trip pagi"></div>
+    <button class="btn-sc" onclick="kirimSetor()"><i class="ti ti-send" style="margin-right:4px"></i>Kirim Setoran ke Admin</button>
+  </div>
+
+  <div class="sec">Riwayat Setoran</div>
+  <div id="setor-list"></div>
+</div>
+
+<!-- RIWAYAT -->
+<div id="pg-riwayat" class="pg">
+  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px">
+    <div style="padding:5px 12px;border-radius:20px;font-size:9px;cursor:pointer;background:var(--pr);color:#fff;font-weight:600" onclick="filterRw('',this)">Semua</div>
+    <div style="padding:5px 12px;border-radius:20px;font-size:9px;cursor:pointer;background:#fef9e7;color:#9a6b0a;font-weight:600" onclick="filterRw('Menunggu',this)">Menunggu</div>
+    <div style="padding:5px 12px;border-radius:20px;font-size:9px;cursor:pointer;background:#eafaf1;color:#1e7e44;font-weight:600" onclick="filterRw('Jalan',this)">Jalan</div>
+    <div style="padding:5px 12px;border-radius:20px;font-size:9px;cursor:pointer;background:#eaf4fb;color:#1a6fa0;font-weight:600" onclick="filterRw('Selesai',this)">Selesai</div>
+  </div>
+  <div id="riwayat-list"></div>
+</div>
+
+<!-- GAJI -->
+<div id="pg-gaji" class="pg">
+  <div id="gaji-banner" class="banner bn-zk" style="margin-bottom:10px">
+    <div style="font-size:9px;opacity:.7">Total Gaji + Fee Bulan Ini</div>
+    <div style="font-size:24px;font-weight:700;color:var(--ac);margin:3px 0" id="gaji-total">Rp 0</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">
+      <div><div style="font-size:8px;opacity:.7">Gaji Pokok</div><div style="font-size:12px;font-weight:700" id="gaji-pokok">Rp 0</div></div>
+      <div><div style="font-size:8px;opacity:.7">Fee Otomatis</div><div style="font-size:12px;font-weight:700;color:var(--ac)" id="gaji-fee">Rp 0</div></div>
+    </div>
+  </div>
+  <div class="gaji-box">
+    <div style="font-size:11px;font-weight:600;color:var(--tx);margin-bottom:8px">Rincian Gaji</div>
+    <div class="gaji-row"><span style="font-size:11px;color:var(--mt)">Gaji Pokok</span><span style="font-size:12px;font-weight:600" id="g-pokok">Rp 0</span></div>
+    <div class="gaji-row"><span style="font-size:11px;color:#1e7e44;font-weight:600">Fee Otomatis</span><span style="font-size:12px;font-weight:700;color:#1e7e44" id="g-fee">Rp 0</span></div>
+    <div class="gaji-row"><span style="font-size:11px;color:var(--dn)">Potongan</span><span style="font-size:12px;font-weight:600;color:var(--dn)" id="g-pot">Rp 0</span></div>
+    <div style="height:.5px;background:var(--bd);margin:6px 0"></div>
+    <div class="gaji-row"><span style="font-size:12px;font-weight:700">Total</span><span style="font-size:14px;font-weight:700;color:var(--sc)" id="g-total">Rp 0</span></div>
+    <div class="gaji-row" style="margin-top:4px"><span style="font-size:11px;color:var(--mt)">Sudah Dibayar</span><span style="font-size:12px;font-weight:600;color:var(--sc)" id="g-bayar">Rp 0</span></div>
+    <div class="gaji-row"><span style="font-size:11px;font-weight:600">Sisa Belum Dibayar</span><span style="font-size:13px;font-weight:700" id="g-sisa">Rp 0</span></div>
+  </div>
+  <div style="background:#eafaf1;border:.5px solid #a9dfbf;border-radius:9px;padding:9px 12px;margin-bottom:10px;font-size:10px;color:#1e7e44;line-height:1.6">
+    <strong>Fee Otomatis:</strong> Travel Rp 5.000/penumpang · Rental biasa Rp 100.000/hari · Rental luar Sumbar Rp 200.000/hari<br>
+    Fee dihitung otomatis saat setoran dikonfirmasi admin.
+  </div>
+  <div class="sec">Rincian Fee</div>
+  <div id="fee-detail-list"></div>
+  <div class="sec">Riwayat Pembayaran Gaji</div>
+  <div id="gaji-rw-list"></div>
+</div>
+</div>
+<div class="toast" id="tst"></div>
+
+<script>
+const SB_URL='https://mzezxeomggazvrpuwpgu.supabase.co';
+const SB_KEY='sb_publishable_fBI3n7VG_4cqJIGMvcphww_IAzX8lxh';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+const DRIVERS={'2222':{nama:'Zakaria',armada:'Hiace 8 Kursi · AB 7845 HH',warna:'bn-zk'},'1111':{nama:'Rahmat Hidayat',armada:'Hiace 9 Kursi · AB 7167 BE',warna:'bn-rh'}};
+var curDrv=null,pinVal='';
+var DB=[],SETOR=[],FEE_LOG=[],GAJI_COMP={},GAJI_RW=[];
+var biayaRows=[],fRw='',SCTR=1,BCTR=1;
+var today=new Date().toISOString().slice(0,10);
+
+/* ── PIN ── */
+function pinI(d){if(pinVal.length>=4)return;pinVal+=d;updDots();if(pinVal.length===4)setTimeout(checkPin,200);}
+function pinD(){pinVal=pinVal.slice(0,-1);updDots();}
+function updDots(){for(var i=0;i<4;i++)document.getElementById('d'+i).className='pin-dot'+(i<pinVal.length?' filled':'');}
+function checkPin(){
+  if(DRIVERS[pinVal]){
+    curDrv=DRIVERS[pinVal];
+    document.getElementById('pin-screen').classList.add('h');
+    document.getElementById('drv-chip').textContent=curDrv.nama;
+    document.getElementById('drv-nama').textContent=curDrv.nama;
+    document.getElementById('drv-armada').textContent=curDrv.armada;
+    document.getElementById('drv-banner').className='banner '+curDrv.warna;
+    document.getElementById('gaji-banner').className='banner '+curDrv.warna;
+    document.getElementById('tgl-today').textContent=today;
+    loadAll().then(function(){setupRT();});
+  }else{
+    document.getElementById('pin-err').textContent='PIN salah.';
+    pinVal='';updDots();
+    setTimeout(function(){document.getElementById('pin-err').textContent='';},2000);
+  }
+}
+function logout(){document.getElementById('pin-screen').classList.remove('h');pinVal='';updDots();curDrv=null;biayaRows=[];}
+
+/* ── SYNC ── */
+function setSS(t,m){var e=document.getElementById('sync-status');if(!e)return;e.className='sync-badge '+t;var i=t==='ok'?'ti-cloud-check':t==='syncing'?'ti-cloud-upload':'ti-cloud-x';e.innerHTML='<i class="ti '+i+'" style="font-size:10px"></i>'+m;}
+function fmtRp(n){return'Rp '+(n||0).toLocaleString('id-ID');}
+function T(m,t){var e=document.getElementById('tst');e.textContent=m;e.style.background=t==='err'?'#e74c3c':'#27ae60';e.classList.add('show');setTimeout(function(){e.classList.remove('show');},2400);}
+
+async function loadAll(){
+  setSS('syncing','Memuat...');
+  try{
+    var[p,s,f,gc,gr]=await Promise.all([
+      sb.from('pesanan').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false}),
+      sb.from('setoran').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false}),
+      sb.from('fee_log').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false}),
+      sb.from('gaji_comp').select('*').eq('driver',curDrv.nama),
+      sb.from('gaji_rw').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false})
+    ]);
+    DB=(p.data||[]).map(r2p);
+    SETOR=s.data||[];
+    FEE_LOG=f.data||[];
+    if(gc.data&&gc.data.length)GAJI_COMP=gc.data[0];
+    GAJI_RW=gr.data||[];
+    if(SETOR.length){var si=SETOR.map(function(x){return parseInt(x.id.replace('ST-',''))||0;});SCTR=Math.max.apply(null,si)+1;}
+    setSS('ok','Online');renderAll();
+  }catch(e){setSS('error','Offline - cek internet');console.error(e);}
+}
+
+function r2p(r){return{id:r.id,tipe:r.tipe,nama:r.nama,hp:r.hp,rute:r.rute,driver:r.driver,armStr:r.arm_str,tgl:r.tgl,jadwal:r.jadwal,seats:r.seats||[],pnp:r.pnp||0,bandara:r.bandara,mahasiswa:r.mahasiswa,total:r.total||0,mulai:r.mulai,selesai:r.selesai,hari:r.hari||0,sisa:r.sisa||0,catatan:r.catatan,status:r.status,mahasiswa_seats:r.mahasiswa_seats||[],luar_sumbar:r.luar_sumbar||false};}
+
+function setupRT(){
+  sb.channel('drv-'+curDrv.nama)
+    .on('postgres_changes',{event:'*',schema:'public',table:'pesanan',filter:'driver=eq.'+curDrv.nama},function(){loadAll();})
+    .on('postgres_changes',{event:'*',schema:'public',table:'setoran',filter:'driver=eq.'+curDrv.nama},function(){loadAll();})
+    .on('postgres_changes',{event:'*',schema:'public',table:'fee_log',filter:'driver=eq.'+curDrv.nama},function(){loadAll();})
+    .subscribe();
+}
+
+/* ── STATUS ── */
+async function setStatus(id,ns){
+  var p=DB.find(function(x){return x.id===id;});if(!p)return;
+  p.status=ns;
+  await sb.from('pesanan').update({status:ns}).eq('id',id);
+  T('Status → '+ns);renderAll();
+}
+
+/* ── TANDAI MAHASISWA ── */
+async function toggleMhs(pesananId,seat){
+  var p=DB.find(function(x){return x.id===pesananId;});if(!p)return;
+  if(!p.mahasiswa_seats)p.mahasiswa_seats=[];
+  var i=p.mahasiswa_seats.indexOf(seat);
+  if(i===-1)p.mahasiswa_seats.push(seat);else p.mahasiswa_seats.splice(i,1);
+  await sb.from('pesanan').update({mahasiswa_seats:p.mahasiswa_seats}).eq('id',pesananId);
+  T('Kursi '+seat+(i===-1?' ditandai MHS':' dibatalkan'));renderJadwal();
+}
+
+/* ── BIAYA ROWS ── */
+var biayaCtr=0;
+function tambahBiayaRow(){
+  var id='br-'+biayaCtr++;
+  biayaRows.push({id,nama:'',jumlah:0});
+  renderBiayaRows();
+}
+function hapusBiayaRow(id){
+  biayaRows=biayaRows.filter(function(b){return b.id!==id;});
+  renderBiayaRows();hitSetor();
+}
+function updateBiaya(id,field,val){
+  var b=biayaRows.find(function(x){return x.id===id;});
+  if(b){b[field]=field==='jumlah'?parseInt(val)||0:val;}
+  hitSetor();
+}
+function renderBiayaRows(){
+  var el=document.getElementById('biaya-list-input');
+  if(!biayaRows.length){el.innerHTML='<div style="font-size:10px;color:var(--mt);text-align:center;padding:5px 0;margin-bottom:5px">Tidak ada biaya perjalanan</div>';hitSetor();return;}
+  el.innerHTML=biayaRows.map(function(b){
+    return'<div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;margin-bottom:5px;align-items:center">'+
+      '<input class="fi" type="text" placeholder="Nama biaya (BBM, makan, tol...)" value="'+b.nama+'" oninput="updateBiaya(\''+b.id+'\',\'nama\',this.value)" style="font-size:11px;padding:6px 9px">'+
+      '<input class="fi" type="number" placeholder="Jumlah (Rp)" value="'+(b.jumlah||'')+'" oninput="updateBiaya(\''+b.id+'\',\'jumlah\',this.value)" style="font-size:11px;padding:6px 9px;width:120px">'+
+      '<button onclick="hapusBiayaRow(\''+b.id+'\')" style="background:#fdecea;border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+
+      '<i class="ti ti-trash" style="font-size:13px;color:var(--dn)"></i></button>'+
+    '</div>';
+  }).join('');
+  hitSetor();
+}
+
+function hitSetor(){
+  var kotor=parseInt(document.getElementById('s-jml').value)||0;
+  var totalBiaya=biayaRows.reduce(function(s,b){return s+b.jumlah;},0);
+  var bersih=Math.max(0,kotor-totalBiaya);
+  var prev=document.getElementById('setor-preview');
+  if(kotor>0){
+    prev.style.display='block';
+    document.getElementById('prev-kotor').textContent=fmtRp(kotor);
+    document.getElementById('prev-tot-biaya').textContent=fmtRp(totalBiaya);
+    document.getElementById('prev-bersih').textContent=fmtRp(bersih);
+    var biayaRowsEl=document.getElementById('prev-biaya-rows');
+    biayaRowsEl.innerHTML=biayaRows.filter(function(b){return b.jumlah>0&&b.nama;}).map(function(b){
+      return'<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0"><span style="color:rgba(255,255,255,.6)">− '+b.nama+'</span><span style="color:var(--dn)">'+fmtRp(b.jumlah)+'</span></div>';
+    }).join('');
+  }else{
+    prev.style.display='none';
+  }
+}
+
+/* ── KIRIM SETORAN ── */
+async function kirimSetor(){
+  var tgl=document.getElementById('s-tgl').value;
+  var kotor=parseInt(document.getElementById('s-jml').value)||0;
+  var ket=document.getElementById('s-ket').value.trim();
+  if(!tgl){T('Tanggal wajib diisi','err');return;}
+  if(!kotor){T('Jumlah setoran wajib diisi','err');return;}
+  var totalBiaya=biayaRows.reduce(function(s,b){return s+b.jumlah;},0);
+  var bersih=Math.max(0,kotor-totalBiaya);
+  setSS('syncing','Mengirim...');
+  var id='ST-'+String(SCTR++).padStart(3,'0');
+  var biayaValid=biayaRows.filter(function(b){return b.jumlah>0&&b.nama;});
+  var s={
+    id,driver:curDrv.nama,tgl,
+    jumlah:bersih,
+    jumlah_kotor:kotor,
+    total_biaya:totalBiaya,
+    biaya_detail:biayaValid,
+    keterangan:ket,
+    status:'Menunggu'
+  };
+  var{error}=await sb.from('setoran').insert(s);
+  if(error){T('Gagal kirim: '+error.message,'err');setSS('error','Gagal');return;}
+  /* biaya masuk tabel biaya langsung (admin tinggal lihat) */
+  for(var i=0;i<biayaValid.length;i++){
+    var bv=biayaValid[i];
+    await sb.from('biaya').insert({
+      id:'BY-'+Date.now()+'-'+i,
+      kategori:'Biaya Perjalanan',
+      tgl,
+      nama:bv.nama+' ('+curDrv.nama+')',
+      jumlah:bv.jumlah
+    });
+  }
+  SETOR.unshift(s);
+  document.getElementById('s-jml').value='';
+  document.getElementById('s-ket').value='';
+  document.getElementById('setor-preview').style.display='none';
+  biayaRows=[];renderBiayaRows();
+  setSS('ok','Online');
+  T('Setoran Rp '+fmtRp(bersih)+' terkirim! Menunggu konfirmasi admin.');
+  renderAll();
+}
+
+/* ── RENDER JADWAL ── */
+function renderJadwal(){
+  var todayP=DB.filter(function(p){return p.tgl===today&&p.status!=='Batal';});
+  var mendatang=DB.filter(function(p){return p.tgl>today&&p.status!=='Batal';}).slice(0,5);
+  var aktif=todayP.filter(function(p){return p.status==='Menunggu'||p.status==='Jalan';}).length;
+  var selesai=todayP.filter(function(p){return p.status==='Selesai';}).length;
+  var totH=todayP.reduce(function(s,p){return s+p.total;},0);
+  var fH=FEE_LOG.filter(function(f){return f.tgl===today;}).reduce(function(s,f){return s+f.jumlah;},0);
+  var fT=FEE_LOG.reduce(function(s,f){return s+f.jumlah;},0);
+  document.getElementById('jdw-cnt').textContent=todayP.length;
+  document.getElementById('jdw-total').textContent=fmtRp(totH);
+  document.getElementById('s-aktif').textContent=aktif;
+  document.getElementById('s-selesai').textContent=selesai;
+  document.getElementById('s-fee-hari').textContent=fmtRp(fH);
+  document.getElementById('s-fee-tot').textContent=fmtRp(fT);
+  var el=document.getElementById('jadwal-list');
+  el.innerHTML=todayP.length?todayP.map(function(p){return pCard(p,true);}).join(''):'<div class="kosong"><i class="ti ti-calendar-off"></i><div style="font-size:11px">Tidak ada jadwal hari ini.</div></div>';
+  var mel=document.getElementById('jadwal-mendatang');
+  mel.innerHTML=mendatang.length?mendatang.map(function(p){return pCard(p,false);}).join(''):'<div class="kosong"><i class="ti ti-calendar"></i><div style="font-size:11px">Tidak ada jadwal mendatang.</div></div>';
+}
+
+function pCard(p,showActions){
+  var sCls=p.status==='Jalan'?'p-j':p.status==='Selesai'?'p-s':p.status==='Batal'?'p-b':'p-p';
+  var icoC=p.tipe==='rental'?'ico-g':'ico-b';
+  var icoClr=p.tipe==='rental'?'#27ae60':'#2980b9';
+  var rows='';
+  if(p.tipe==='travel'){
+    rows+='<div class="prow"><i class="ti ti-clock"></i><span class="prow-v">'+(p.jadwal||'-')+'</span></div>';
+    rows+='<div class="prow"><i class="ti ti-map-pin"></i><span class="prow-v">'+p.rute+'</span></div>';
+    rows+='<div class="prow"><i class="ti ti-users"></i><span class="prow-v">'+p.pnp+' penumpang · Kursi '+(p.seats||[]).join(', ')+'</span></div>';
+    rows+='<div class="prow"><i class="ti ti-phone"></i><span class="prow-v">'+p.nama+(p.hp?' · '+p.hp:'')+'</span></div>';
+    if(p.bandara)rows+='<div class="prow"><i class="ti ti-plane"></i><span class="prow-v" style="color:#2980b9">Antar/Jemput Bandara</span></div>';
+  }else{
+    rows+='<div class="prow"><i class="ti ti-calendar"></i><span class="prow-v">'+p.mulai+' - '+p.selesai+' ('+p.hari+' hari)</span></div>';
+    rows+='<div class="prow"><i class="ti ti-user"></i><span class="prow-v">'+p.nama+(p.hp?' · '+p.hp:'')+'</span></div>';
+    if(p.luar_sumbar)rows+='<div class="prow"><i class="ti ti-map-2"></i><span class="prow-v" style="color:#e74c3c;font-weight:700">Luar Sumbar · Fee Rp 200.000/hari</span></div>';
+  }
+  /* tandai kursi mahasiswa */
+  var mhsSeats=p.mahasiswa_seats||[];
+  var mhsSection='';
+  if(p.tipe==='travel'&&p.seats&&p.seats.length&&showActions&&p.status!=='Selesai'&&p.status!=='Batal'){
+    mhsSection='<div class="divider"></div>'+
+      '<div style="font-size:10px;font-weight:600;color:#6b21a8;margin-bottom:5px"><i class="ti ti-school" style="margin-right:3px"></i>Tandai kursi mahasiswa</div>'+
+      '<div class="chip-row">'+
+      p.seats.map(function(s){var isMhs=mhsSeats.indexOf(s)!==-1;return'<div class="chip'+(isMhs?' mhs':'')+'" onclick="toggleMhs(\''+p.id+'\','+s+')"><i class="ti '+(isMhs?'ti-school':'ti-armchair')+'"></i>'+s+(isMhs?' MHS':'')+'</div>';}).join('')+
+      '</div>';
+  }
+  var actSection='';
+  if(showActions){
+    if(p.status==='Menunggu')actSection='<div class="btn-row"><button class="abtn abtn-mulai" onclick="setStatus(\''+p.id+'\',\'Jalan\')"><i class="ti ti-player-play" style="margin-right:3px"></i>Mulai Trip</button></div>';
+    else if(p.status==='Jalan')actSection='<div class="btn-row"><button class="abtn abtn-selesai" onclick="setStatus(\''+p.id+'\',\'Selesai\')"><i class="ti ti-player-stop" style="margin-right:3px"></i>Selesai Trip</button></div>';
+  }
+  return'<div class="pcard">'+
+    '<div class="pcard-head">'+
+    '<div class="pcard-ico '+icoC+'"><i class="ti '+(p.tipe==='rental'?'ti-car':'ti-bus')+'" style="color:'+icoClr+'"></i></div>'+
+    '<div class="pcard-htxt"><div class="pcard-id">'+p.id+'</div><div class="pcard-rute">'+p.rute+'</div>'+
+    '<span class="pcard-badge '+(p.tipe==='travel'?'badge-tv':'badge-rt')+'">'+(p.tipe==='travel'?'Travel':'Rental')+'</span>'+
+    (p.luar_sumbar?'<span class="pcard-badge" style="background:#fdecea;color:#a02020;margin-left:3px">Luar Sumbar</span>':'')+
+    '</div>'+
+    '<div class="pcard-right"><div class="pcard-price">'+fmtRp(p.total)+'</div><div class="pill '+sCls+'">'+p.status+'</div></div>'+
+    '</div>'+
+    '<div>'+rows+'</div>'+
+    mhsSection+actSection+
+  '</div>';
+}
+
+/* ── RENDER SETORAN ── */
+function renderSetoran(){
+  var ok=SETOR.filter(function(s){return s.status==='Dikonfirmasi';}).reduce(function(s,x){return s+(x.jumlah||0);},0);
+  var wt=SETOR.filter(function(s){return s.status==='Menunggu';}).reduce(function(s,x){return s+(x.jumlah||0);},0);
+  var totKotor=SETOR.reduce(function(s,x){return s+(x.jumlah_kotor||x.jumlah||0);},0);
+  var totBiayaDrv=SETOR.reduce(function(s,x){return s+(x.total_biaya||0);},0);
+  var totBersih=SETOR.reduce(function(s,x){return s+(x.jumlah||0);},0);
+  document.getElementById('tot-kotor').textContent=fmtRp(totKotor);
+  document.getElementById('tot-biaya-drv').textContent=fmtRp(totBiayaDrv);
+  document.getElementById('tot-bersih').textContent=fmtRp(totBersih);
+  document.getElementById('setor-ok').textContent=fmtRp(ok);
+  document.getElementById('setor-wt').textContent=fmtRp(wt);
+  var el=document.getElementById('setor-list');
+  el.innerHTML=SETOR.length?SETOR.map(function(s){
+    var sc=s.status==='Dikonfirmasi'?'ss-ok':s.status==='Menunggu'?'ss-wt':'ss-no';
+    var biayaD=s.biaya_detail||[];
+    var feeH=FEE_LOG.filter(function(f){return f.stor_id===s.id;}).reduce(function(a,f){return a+f.jumlah;},0);
+    var kotor=s.jumlah_kotor||s.jumlah||0;
+    var totB=s.total_biaya||0;
+    var bersih=s.jumlah||0;
+    return'<div class="setor-hist">'+
+      '<div class="sh-head"><span class="sh-id">'+s.id+(s.keterangan?' · '+s.keterangan:'')+'</span><span class="sh-jml">'+fmtRp(bersih)+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
+      '<span style="font-size:10px;color:var(--mt)">'+s.tgl+'</span>'+
+      '<span class="sh-status '+sc+'">'+s.status+'</span>'+
+      '</div>'+
+      /* rincian */
+      (totB>0?
+        '<div class="biaya-rincian">'+
+        '<div style="font-size:9px;font-weight:600;color:#9a6b0a;margin-bottom:3px">Rincian Setoran</div>'+
+        '<div class="br-item"><span>Setoran Kotor</span><span>'+fmtRp(kotor)+'</span></div>'+
+        biayaD.map(function(b){return'<div class="br-item"><span style="color:var(--dn)">− '+b.nama+'</span><span style="color:var(--dn)">'+fmtRp(b.jumlah)+'</span></div>';}).join('')+
+        '<div class="br-item" style="font-weight:700;color:var(--pr)"><span>Setoran Bersih</span><span>'+fmtRp(bersih)+'</span></div>'+
+        '</div>':'')+
+      (feeH?'<div style="font-size:10px;color:#1e7e44;margin-top:5px;background:#eafaf1;border-radius:5px;padding:3px 8px">Fee dihitung: <strong>'+fmtRp(feeH)+'</strong></div>':'')+
+    '</div>';
+  }).join(''):'<div class="kosong"><i class="ti ti-inbox"></i><div style="font-size:11px">Belum ada setoran.</div></div>';
+}
+
+/* ── RENDER RIWAYAT ── */
+function filterRw(s,el){fRw=s;renderRiwayat();}
+function renderRiwayat(){
+  var data=fRw?DB.filter(function(p){return p.status===fRw;}):DB;
+  document.getElementById('riwayat-list').innerHTML=data.length?data.map(function(p){return pCard(p,false);}).join(''):'<div class="kosong"><i class="ti ti-inbox"></i><div style="font-size:11px">Tidak ada pesanan.</div></div>';
+}
+
+/* ── RENDER GAJI ── */
+function renderGaji(){
+  var fee=FEE_LOG.reduce(function(s,f){return s+f.jumlah;},0);
+  var pokok=GAJI_COMP.pokok||0,potongan=GAJI_COMP.potongan||0,dibayar=GAJI_COMP.dibayar||0;
+  var net=pokok+fee-potongan,sisa=Math.max(0,net-dibayar);
+  document.getElementById('gaji-total').textContent=fmtRp(net);
+  document.getElementById('gaji-pokok').textContent=fmtRp(pokok);
+  document.getElementById('gaji-fee').textContent=fmtRp(fee);
+  document.getElementById('g-pokok').textContent=fmtRp(pokok);
+  document.getElementById('g-fee').textContent=fmtRp(fee);
+  document.getElementById('g-pot').textContent=fmtRp(potongan);
+  document.getElementById('g-total').textContent=fmtRp(net);
+  document.getElementById('g-bayar').textContent=fmtRp(dibayar);
+  document.getElementById('g-sisa').textContent=fmtRp(sisa);
+  document.getElementById('g-sisa').style.color=sisa===0?'var(--sc)':'var(--dn)';
+  var fdEl=document.getElementById('fee-detail-list');
+  fdEl.innerHTML=FEE_LOG.length?
+    '<div class="fee-box"><div class="fee-title">Rincian Fee dari Setoran Dikonfirmasi</div>'+
+    FEE_LOG.map(function(f){return'<div class="fee-item"><span style="color:var(--mt);font-size:9px">'+f.detail+' · '+f.tgl+'</span><span style="font-weight:700;color:#1e7e44">'+fmtRp(f.jumlah)+'</span></div>';}).join('')+
+    '<div class="fee-total"><span>Total Fee</span><span>'+fmtRp(fee)+'</span></div></div>':
+    '<div class="kosong"><i class="ti ti-cash"></i><div style="font-size:11px">Fee muncul otomatis setelah setoran dikonfirmasi admin.</div></div>';
+  var grEl=document.getElementById('gaji-rw-list');
+  grEl.innerHTML=GAJI_RW.length?
+    GAJI_RW.map(function(g){return'<div class="setor-hist"><div class="sh-head"><span class="sh-id">'+g.tgl+' · '+g.keterangan+'</span><span class="sh-jml" style="color:var(--sc)">'+fmtRp(g.jumlah)+'</span></div></div>';}).join(''):
+    '<div class="kosong"><i class="ti ti-wallet"></i><div style="font-size:11px">Belum ada pembayaran gaji.</div></div>';
+}
+
+function SW(name,el){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('pg-'+name).classList.add('active');el.classList.add('active');}
+function renderAll(){renderJadwal();renderSetoran();renderRiwayat();renderGaji();}
+
+document.getElementById('s-tgl').value=today;
+renderBiayaRows();
+</script>
+</body>
+</html>
