@@ -704,8 +704,18 @@ async function simpanR(){
 async function hitungFee(storId){
   var stor=SETOR.find(function(x){return x.id===storId;});if(!stor)return 0;
   var drv=stor.driver,tgl=stor.tgl;
+  /* Gunakan pesanan_ids dari setoran jika ada, fallback ke tanggal */
+  var pesananIds=stor.pesanan_ids||[];
   var sudah=FEE_LOG.filter(function(f){return f.stor_id===storId;}).map(function(f){return f.pesanan_id;});
-  var pesanan=DB.filter(function(p){return p.driver===drv&&p.status!=='Batal'&&getTgl(p).indexOf(tgl)!==-1&&sudah.indexOf(p.id)===-1;});
+  var pesanan=[];
+  if(pesananIds.length>0){
+    /* Hitung fee hanya dari pesanan yang terdaftar di setoran ini */
+    pesanan=DB.filter(function(p){return pesananIds.indexOf(p.id)!==-1&&sudah.indexOf(p.id)===-1;});
+  }else{
+    /* Fallback: pesanan lama tanpa pesanan_ids — pakai tanggal */
+    var tipeStor=stor.tipe_setoran||'travel';
+    pesanan=DB.filter(function(p){return p.driver===drv&&p.status!=='Batal'&&p.tipe===tipeStor&&getTgl(p).indexOf(tgl)!==-1&&sudah.indexOf(p.id)===-1;});
+  }
   var tot=0;
   for(var i=0;i<pesanan.length;i++){
     var p=pesanan[i],fee=0,detail='';
@@ -863,7 +873,7 @@ function renderRekon(){
       var dt=totalStor===0?'Belum disetor':selisih===0?'Sesuai':selisih>0?'Lebih '+fmtRp(selisih):'Kurang '+fmtRp(Math.abs(selisih));
       var feeH=FEE_LOG.filter(function(f){return f.driver===drv&&f.tgl===tgl;}).reduce(function(s,f){return s+f.jumlah;},0);
       var pesH=pes.length?'<div class="pm">'+pes.map(function(p){return'<div class="pm-item"><span style="color:var(--mt);font-size:10px">'+p.id+(p.mahasiswa?' MHS':'')+(p.tipe==='travel'?' ('+p.pnp+' pnp)':' ('+p.hari+' hr)')+'</span><span style="color:var(--pr);font-weight:700;font-size:10px">'+fmtRp(p.total)+'</span></div>';}).join('')+'</div>':'';
-      var storH=stor.map(function(s){var ok=s.status==='Dikonfirmasi',wt=s.status==='Menunggu';return'<div style="display:flex;align-items:center;gap:5px;padding:3px 0"><div style="flex:1;font-size:10px;color:var(--mt)">'+s.id+(s.keterangan?' · '+s.keterangan:'')+'</div><span style="font-size:10px;font-weight:700;color:'+(ok?'var(--sc)':wt?'#9a6b0a':'var(--dn)')+'">'+fmtRp(s.jumlah)+'</span>'+(wt?'<button style="font-size:8px;padding:2px 6px;border-radius:5px;background:var(--sc);color:#fff;border:none;cursor:pointer" onclick="konfirmSetor(\''+s.id+'\')">OK</button><button style="font-size:8px;padding:2px 6px;border-radius:5px;background:var(--dn);color:#fff;border:none;cursor:pointer;margin-left:2px" onclick="tolakSetor(\''+s.id+'\')">X</button>':'<span style="font-size:8px;padding:2px 5px;border-radius:5px;background:'+(ok?'#eafaf1':'#fdecea')+';color:'+(ok?'#1e7e44':'#a02020')+'">'+(ok?'OK':'Ditolak')+'</span>')+'</div>';}).join('');
+      var storH=stor.map(function(s){var ok=s.status==='Dikonfirmasi',wt=s.status==='Menunggu';var tipeStor=s.tipe_setoran||'travel';var pesD=s.pesanan_detail||[];return'<div style="background:'+(tipeStor==='travel'?'#f0f7ff':'#f0fff4')+';border-radius:7px;padding:7px 9px;margin-bottom:4px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px;background:'+(tipeStor==='travel'?'#eaf4fb':'#eafaf1')+';color:'+(tipeStor==='travel'?'#1a6fa0':'#1e7e44')+'">'+(tipeStor==='travel'?'TRAVEL':'RENTAL')+'</span><span style="font-size:10px;font-weight:600;color:var(--mt)">'+s.id+'</span><span style="margin-left:auto;font-size:11px;font-weight:700;color:'+(ok?'var(--sc)':wt?'#9a6b0a':'var(--dn)')+'">'+fmtRp(s.jumlah)+'</span><span style="font-size:9px;padding:2px 6px;border-radius:20px;background:'+(ok?'#eafaf1':wt?'#fef9e7':'#fdecea')+';color:'+(ok?'#1e7e44':wt?'#9a6b0a':'#a02020')+'">'+s.status+'</span>'+(wt?'<button style="font-size:8px;padding:2px 6px;border-radius:5px;background:var(--sc);color:#fff;border:none;cursor:pointer" onclick="konfirmSetor(\''+s.id+'\')">✓</button><button style="font-size:8px;padding:2px 6px;border-radius:5px;background:var(--dn);color:#fff;border:none;cursor:pointer;margin-left:2px" onclick="tolakSetor(\''+s.id+'\')">✗</button>':'')+'</div>'+(pesD.length?'<div style="font-size:9px;color:var(--mt)">'+pesD.map(function(p){return p.id+(tipeStor==='travel'?' ('+p.pnp+' pnp)':' ('+p.hari+' hr)');}).join(', ')+'</div>':'')+(s.total_biaya?'<div style="font-size:9px;color:var(--dn);margin-top:2px">Biaya perjalanan: −'+fmtRp(s.total_biaya)+' · Kotor: '+fmtRp(s.jumlah_kotor||0)+'</div>':'')+'</div>';}).join('');
       return'<div style="margin-bottom:7px"><div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><div class="drv-av '+av+'" style="width:24px;height:24px;font-size:10px">'+ini+'</div><div style="font-size:11px;font-weight:600;flex:1">'+drv+'</div><span class="rd '+dc+'">'+dt+'</span></div>'+(pes.length?'<div style="font-size:9px;color:var(--mt);margin-bottom:2px">Pesanan ('+fmtRp(totalPes)+')</div>'+pesH:'<div style="font-size:9px;color:var(--mt)">Tidak ada pesanan</div>')+(stor.length?'<div style="font-size:9px;color:var(--mt);margin:4px 0 2px">Setoran</div>'+storH:'<div style="font-size:9px;color:var(--dn);margin-top:3px">Belum ada setoran</div>')+(feeH?'<div style="font-size:9px;color:#1e7e44;margin-top:4px;background:#eafaf1;border-radius:5px;padding:3px 7px">Fee driver: <strong>'+fmtRp(feeH)+'</strong></div>':'')+'</div>';
     }).filter(Boolean).join('<div style="height:.5px;background:var(--bd);margin:5px 0"></div>');
     if(!drvHTML)return'';
