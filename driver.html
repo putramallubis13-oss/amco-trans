@@ -231,9 +231,8 @@ select.fi{appearance:none}
   </div>
   <!-- FORM TRAVEL -->
   <div id="form-setor-tv" class="card">
-    <div style="background:#eaf4fb;border:.5px solid #b5d4f4;border-radius:8px;padding:8px 11px;margin-bottom:10px;font-size:10px;color:#1a3a5c;line-height:1.5">Pesanan yang sudah <strong>Mulai Trip</strong> otomatis muncul di sini. Centang pesanan yang akan disetor.</div>
+    <div style="background:#eaf4fb;border:.5px solid #b5d4f4;border-radius:8px;padding:8px 11px;margin-bottom:10px;font-size:10px;color:#1a3a5c;line-height:1.5">Pesanan yang sudah <strong>Selesai Trip</strong> otomatis dihitung. Tambahkan biaya perjalanan jika ada.</div>
     <div id="stv-pes-list"><div style="font-size:10px;color:var(--mt);text-align:center;padding:10px">Memuat pesanan...</div></div>
-    <div id="stv-selected-info" style="display:none;background:#eaf4fb;border-radius:7px;padding:7px 10px;margin-bottom:7px;font-size:10px;color:#1a3a5c"></div>
     <div style="background:#f4f6fa;border-radius:9px;padding:10px 12px;margin-bottom:8px;margin-top:5px">
       <div style="font-size:10px;font-weight:600;color:var(--mt);margin-bottom:7px">Potongan & Biaya</div>
       <!-- DISKON MAHASISWA -->
@@ -653,35 +652,36 @@ function updBiaya(listId,id,field,val){
 var mhsSetor={};
 
 function loadPesananTravel(){
-  /* Hanya tampil pesanan travel yang sudah Selesai */
+  /* Semua pesanan travel yang Selesai langsung masuk setoran */
   var pes=DB.filter(function(p){return p.tipe==='travel'&&p.status==='Selesai';});
+  selTvPes=pes.map(function(p){return p.id;});
   var el=document.getElementById('stv-pes-list');
   if(!pes.length){
     el.innerHTML='<div class="kosong" style="padding:12px"><i class="ti ti-bus"></i><div style="font-size:10px">Tidak ada pesanan yang sudah selesai trip.<br>Tekan <strong>Selesai Trip</strong> di tab Jadwal dulu.</div></div>';
     hitSetorTravel();return;
   }
-  el.innerHTML=pes.map(function(p){
-    var isSel=selTvPes.indexOf(p.id)!==-1;
-    return'<div class="pes-check'+(isSel?' selected':'')+'" onclick="toggleTvPes(\''+p.id+'\')">'+
-      '<div class="pes-check-head">'+
-        '<div class="pes-check-box"></div>'+
-        '<div class="pes-check-info">'+
-          '<div class="pes-check-id">'+p.id+
-            '<span class="pill p-s" style="margin-left:5px">Selesai</span>'+
-          '</div>'+
-          '<div class="pes-check-rute">'+p.rute+'</div>'+
-          '<div class="pes-check-det">'+p.tgl+' · '+(p.jadwal||'-')+' · '+p.pnp+' penumpang · Kursi '+(p.seats||[]).join(', ')+'</div>'+
+  var totPend=pes.reduce(function(s,p){return s+p.total;},0);
+  el.innerHTML='<div style="background:#f4f6fa;border-radius:9px;padding:10px 12px;margin-bottom:7px">'+
+    '<div style="font-size:9px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Pesanan Selesai</div>'+
+    pes.map(function(p){
+      return'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid var(--bd)">'+
+        '<div>'+
+          '<div style="font-size:10px;font-weight:600;color:var(--tx)">'+p.id+' · '+p.rute+'</div>'+
+          '<div style="font-size:9px;color:var(--mt)">'+p.tgl+' · '+(p.jadwal||'-')+' · '+p.pnp+' penumpang</div>'+
         '</div>'+
-        '<div class="pes-check-jml">'+fmtRp(p.total)+'</div>'+
-      '</div>'+
-    '</div>';
-  }).join('');
+        '<div style="font-size:11px;font-weight:700;color:var(--pr)">'+fmtRp(p.total)+'</div>'+
+      '</div>';
+    }).join('')+
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:6px;margin-top:2px">'+
+      '<span style="font-size:11px;font-weight:700">Total Pendapatan</span>'+
+      '<span style="font-size:13px;font-weight:700;color:var(--pr)">'+fmtRp(totPend)+'</span>'+
+    '</div>'+
+  '</div>';
   hitSetorTravel();
 }
 
 function toggleTvPes(id){
-  var i=selTvPes.indexOf(id);if(i===-1)selTvPes.push(id);else selTvPes.splice(i,1);
-  loadPesananTravel();
+  /* tidak dipakai lagi tapi dibiarkan agar tidak error */
 }
 function hitSetorTravel(){
   var sesPes=DB.filter(function(p){return selTvPes.indexOf(p.id)!==-1;});
@@ -689,12 +689,8 @@ function hitSetorTravel(){
   var totMhsDis=jumlahMhs*DIS_MHS;
   var totBiaya=tvBiayaRows.reduce(function(s,b){return s+b.jumlah;},0);
   var bersih=Math.max(0,totPend-totMhsDis-totBiaya);
-  var info=document.getElementById('stv-selected-info');
   var prev=document.getElementById('stv-preview');
   if(sesPes.length>0){
-    info.style.display='block';
-    info.innerHTML=sesPes.length+' pesanan · Pendapatan: <strong>'+fmtRp(totPend)+'</strong>'+
-      (totMhsDis>0?' · Diskon MHS: <strong style="color:#6b21a8">−'+fmtRp(totMhsDis)+'</strong>':'');
     prev.style.display='block';
     document.getElementById('stv-prev-pesanan').innerHTML=sesPes.map(function(p){
       return'<div class="prev-row"><span class="prev-lbl">'+p.id+' · '+p.pnp+' pnp · '+getTujuan(p.rute||'')+'</span><span class="prev-val">'+fmtRp(p.total)+'</span></div>';
@@ -706,7 +702,7 @@ function hitSetorTravel(){
     }).join('');
     document.getElementById('stv-prev-biaya-rows').innerHTML=mhsRowHTML+biayaHTML;
     document.getElementById('stv-prev-bersih').textContent=fmtRp(bersih);
-  }else{info.style.display='none';prev.style.display='none';}
+  }else{prev.style.display='none';}
 }
 async function kirimSetorTravel(){
   var ket=document.getElementById('stv-ket').value.trim();
