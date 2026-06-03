@@ -652,8 +652,15 @@ function updBiaya(listId,id,field,val){
 var mhsSetor={};
 
 function loadPesananTravel(){
-  /* Semua pesanan travel yang Selesai langsung masuk setoran */
-  var pes=DB.filter(function(p){return p.tipe==='travel'&&p.status==='Selesai';});
+  /* Kumpulkan pesanan_ids yang sudah pernah disetor */
+  var sudahSetor=[];
+  SETOR.forEach(function(s){
+    (s.pesanan_ids||[]).forEach(function(id){sudahSetor.push(id);});
+  });
+  /* Hanya tampil pesanan Selesai yang BELUM pernah disetor */
+  var pes=DB.filter(function(p){
+    return p.tipe==='travel'&&p.status==='Selesai'&&sudahSetor.indexOf(p.id)===-1;
+  });
   selTvPes=pes.map(function(p){return p.id;});
   var el=document.getElementById('stv-pes-list');
   if(!pes.length){
@@ -740,10 +747,12 @@ async function kirimSetorTravel(){
   document.getElementById('mhs-dis-info').style.display='none';
   document.getElementById('stv-ket').value='';
   document.getElementById('stv-preview').style.display='none';
-  document.getElementById('stv-selected-info').style.display='none';
   setSS('ok','Online');
   T('Setoran travel '+fmtRp(bersih)+' terkirim!'+(totMhsDis?' · Diskon MHS −'+fmtRp(totMhsDis):''));
-  loadPesananTravel();mkBiayaRow('tv-biaya-list',tvBiayaRows,hitSetorTravel);renderAll();
+  /* Refresh list — pesanan yang sudah disetor otomatis hilang */
+  mkBiayaRow('tv-biaya-list',tvBiayaRows,hitSetorTravel);
+  loadPesananTravel();
+  renderAll();
 }
 
 /* ── SETORAN RENTAL ── */
