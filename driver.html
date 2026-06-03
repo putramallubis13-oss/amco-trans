@@ -231,9 +231,8 @@ select.fi{appearance:none}
   </div>
   <!-- FORM TRAVEL -->
   <div id="form-setor-tv" class="card">
-    <div style="background:#eaf4fb;border:.5px solid #b5d4f4;border-radius:8px;padding:8px 11px;margin-bottom:10px;font-size:10px;color:#1a3a5c;line-height:1.5">Pilih tanggal → pesanan travel hari itu muncul otomatis. Centang yang akan disetor.</div>
-    <div class="fg"><div class="fl">Tanggal Setoran *</div><input class="fi" type="date" id="stv-tgl" onchange="loadPesananTravel()"></div>
-    <div id="stv-pes-list"><div style="font-size:10px;color:var(--mt);text-align:center;padding:10px">Pilih tanggal untuk lihat pesanan travel.</div></div>
+    <div style="background:#eaf4fb;border:.5px solid #b5d4f4;border-radius:8px;padding:8px 11px;margin-bottom:10px;font-size:10px;color:#1a3a5c;line-height:1.5">Pesanan yang sudah <strong>Mulai Trip</strong> otomatis muncul di sini. Centang pesanan yang akan disetor.</div>
+    <div id="stv-pes-list"><div style="font-size:10px;color:var(--mt);text-align:center;padding:10px">Memuat pesanan...</div></div>
     <div id="stv-selected-info" style="display:none;background:#eaf4fb;border-radius:7px;padding:7px 10px;margin-bottom:7px;font-size:10px;color:#1a3a5c"></div>
     <div style="background:#f4f6fa;border-radius:9px;padding:10px 12px;margin-bottom:8px;margin-top:5px">
       <div style="font-size:10px;font-weight:600;color:var(--mt);margin-bottom:7px">Potongan & Biaya</div>
@@ -271,8 +270,7 @@ select.fi{appearance:none}
     <div style="background:#eafaf1;border:.5px solid #a9dfbf;border-radius:8px;padding:8px 11px;margin-bottom:10px;font-size:10px;color:#1a5c3a;line-height:1.5">Pilih pesanan rental yang ingin disetor.</div>
     <div id="srt-pes-list"></div>
     <div id="srt-form-detail" style="display:none">
-      <div class="fg" style="margin-top:7px"><div class="fl">Tanggal Setoran *</div><input class="fi" type="date" id="srt-tgl"></div>
-      <div class="fg"><div class="fl">Jumlah Disetor (Rp) *</div><input class="fi" type="number" id="srt-jml" placeholder="Jumlah uang yang disetor" oninput="hitSetorRental()"></div>
+      <div class="fg" style="margin-top:7px"><div class="fl">Jumlah Disetor (Rp) *</div><input class="fi" type="number" id="srt-jml" placeholder="Jumlah uang yang disetor" oninput="hitSetorRental()"></div>
       <div style="background:#f4f6fa;border-radius:9px;padding:10px 12px;margin-bottom:8px">
         <div style="font-size:10px;font-weight:600;color:var(--mt);margin-bottom:7px">Biaya Perjalanan</div>
         <div id="rt-biaya-list"></div>
@@ -411,8 +409,7 @@ function checkPin(){
     document.getElementById('drv-banner').className='banner '+curDrv.warna;
     document.getElementById('gaji-banner').className='banner '+curDrv.warna;
     document.getElementById('tgl-today').textContent=today;
-    document.getElementById('stv-tgl').value=today;
-    document.getElementById('srt-tgl').value=today;
+    /* tanggal setoran otomatis pakai today saat kirim */
     loadAll().then(function(){setupRT();loadPesananTravel();renderRentalList();});
   }else{
     document.getElementById('pin-err').textContent='PIN salah.';
@@ -656,10 +653,13 @@ function updBiaya(listId,id,field,val){
 var mhsSetor={};
 
 function loadPesananTravel(){
-  var tgl=document.getElementById('stv-tgl').value;if(!tgl)return;
-  var pes=DB.filter(function(p){return p.tipe==='travel'&&p.tgl===tgl&&p.status!=='Batal';});
+  /* Hanya tampil pesanan travel yang sudah Selesai */
+  var pes=DB.filter(function(p){return p.tipe==='travel'&&p.status==='Selesai';});
   var el=document.getElementById('stv-pes-list');
-  if(!pes.length){el.innerHTML='<div class="kosong" style="padding:12px"><i class="ti ti-calendar-off"></i><div style="font-size:10px">Tidak ada pesanan travel di tanggal ini.</div></div>';hitSetorTravel();return;}
+  if(!pes.length){
+    el.innerHTML='<div class="kosong" style="padding:12px"><i class="ti ti-bus"></i><div style="font-size:10px">Tidak ada pesanan yang sudah selesai trip.<br>Tekan <strong>Selesai Trip</strong> di tab Jadwal dulu.</div></div>';
+    hitSetorTravel();return;
+  }
   el.innerHTML=pes.map(function(p){
     var isSel=selTvPes.indexOf(p.id)!==-1;
     return'<div class="pes-check'+(isSel?' selected':'')+'" onclick="toggleTvPes(\''+p.id+'\')">'+
@@ -667,10 +667,10 @@ function loadPesananTravel(){
         '<div class="pes-check-box"></div>'+
         '<div class="pes-check-info">'+
           '<div class="pes-check-id">'+p.id+
-            '<span class="pill '+(p.status==='Jalan'?'p-j':p.status==='Selesai'?'p-s':'p-p')+'" style="margin-left:5px">'+p.status+'</span>'+
+            '<span class="pill p-s" style="margin-left:5px">Selesai</span>'+
           '</div>'+
           '<div class="pes-check-rute">'+p.rute+'</div>'+
-          '<div class="pes-check-det">'+(p.jadwal||'-')+' · '+p.pnp+' penumpang · Kursi '+(p.seats||[]).join(', ')+'</div>'+
+          '<div class="pes-check-det">'+p.tgl+' · '+(p.jadwal||'-')+' · '+p.pnp+' penumpang · Kursi '+(p.seats||[]).join(', ')+'</div>'+
         '</div>'+
         '<div class="pes-check-jml">'+fmtRp(p.total)+'</div>'+
       '</div>'+
@@ -709,9 +709,11 @@ function hitSetorTravel(){
   }else{info.style.display='none';prev.style.display='none';}
 }
 async function kirimSetorTravel(){
-  var tgl=document.getElementById('stv-tgl').value,ket=document.getElementById('stv-ket').value.trim();
-  if(!tgl||!selTvPes.length){T('Pilih tanggal & pesanan','err');return;}
+  var ket=document.getElementById('stv-ket').value.trim();
+  if(!selTvPes.length){T('Pilih minimal 1 pesanan','err');return;}
   var sesPes=DB.filter(function(p){return selTvPes.indexOf(p.id)!==-1;});
+  /* Tanggal otomatis = tanggal hari ini */
+  var tgl=today;
   var totPend=sesPes.reduce(function(s,p){return s+p.total;},0);
   var totMhsDis=jumlahMhs*DIS_MHS;
   var biayaV=tvBiayaRows.filter(function(b){return b.jumlah>0&&b.nama;});
@@ -786,8 +788,8 @@ function hitSetorRental(){
   }else prev.style.display='none';
 }
 async function kirimSetorRental(){
-  var tgl=document.getElementById('srt-tgl').value,jml=parseInt(document.getElementById('srt-jml').value)||0,ket=document.getElementById('srt-ket').value.trim();
-  if(!selRtPes||!tgl||!jml){T('Lengkapi form','err');return;}
+  var tgl=today,jml=parseInt(document.getElementById('srt-jml').value)||0,ket=document.getElementById('srt-ket').value.trim();
+  if(!selRtPes||!jml){T('Masukkan jumlah setoran','err');return;}
   var p=DB.find(function(x){return x.id===selRtPes;});
   var biayaV=rtBiayaRows.filter(function(b){return b.jumlah>0&&b.nama;});
   var totBiaya=biayaV.reduce(function(s,b){return s+b.jumlah;},0);
