@@ -307,7 +307,7 @@ select.fi{appearance:none}
       </select>
     </div>
     <div class="fg" id="wj"><div class="fl">Jadwal</div><select class="fi" id="f-jadwal"><option>10.00 - Pagi</option><option>17.00 - Sore</option></select></div>
-    <div class="fg"><div class="fl">Tanggal *</div><input class="fi" id="f-tgl" type="date" onchange="cekKonflik()"></div>
+    <div class="fg"><div class="fl">Tanggal *</div><input class="fi" id="f-tgl" type="date" onchange="selS=[];redrawFS();cekKonflik();hitF()"></div>
     <div class="atabs">
       <div class="atab active" id="at8" onclick="swArm(8)"><div>Hiace 8 Kursi</div><div style="font-size:8px;opacity:.75;margin-top:1px">Zakaria · AB 7845 HH</div></div>
       <div class="atab" id="at9" onclick="swArm(9)"><div>Hiace 9 Kursi</div><div style="font-size:8px;opacity:.75;margin-top:1px">Rahmat · AB 7167 BE</div></div>
@@ -722,10 +722,22 @@ function getBk(rute,armN,skip){
   });
   return r;
 }
-function togFS(num){var i=selS.indexOf(num);if(i===-1)selS.push(num);else selS.splice(i,1);selS.sort(function(a,b){return a-b;});redrawFS();hitF();}
+function togFS(num){
+  /* Cek dulu apakah kursi sudah terisi — jika iya, tidak bisa dipilih */
+  var bk=getBk(curRute,curN,null);
+  if(bk.indexOf(num)!==-1){
+    T('Kursi '+num+' sudah terisi','err');
+    return;
+  }
+  var i=selS.indexOf(num);
+  if(i===-1)selS.push(num);
+  else selS.splice(i,1);
+  selS.sort(function(a,b){return a-b;});
+  redrawFS();hitF();
+}
 function redrawFS(){drawSeats('sg',curN,getBk(curRute,curN,null),selS,[],togFS);var n=selS.length;document.getElementById('sp-cnt').textContent=n+' dipilih';var ss=document.getElementById('ssel');if(n>0){ss.style.display='flex';document.getElementById('ssel-t').textContent='Kursi '+selS.join(', ');document.getElementById('ssel-c').textContent=n;}else ss.style.display='none';}
 function swArm(n){curN=n;selS=[];document.getElementById('at8').className='atab'+(n===8?' active':'');document.getElementById('at9').className='atab'+(n===9?' active':'');document.getElementById('sp-title').textContent=n===8?'Hiace 8 - Zakaria':'Hiace 9 - Rahmat';redrawFS();hitF();cekKonflik();}
-function onRC(){var p=document.getElementById('f-rute').value.split('|');curTarif=parseInt(p[0]);curRute=p[1];document.getElementById('wj').style.display=(p[2]==='lp'||p[2]==='pl')?'flex':'none';selS=[];redrawFS();hitF();}
+function onRC(){var p=document.getElementById('f-rute').value.split('|');curTarif=parseInt(p[0]);curRute=p[1];document.getElementById('wj').style.display=(p[2]==='lp'||p[2]==='pl')?'flex':'none';selS=[];redrawFS();hitF();cekKonflik();}
 function tgMhs(){fMhs=!fMhs;document.getElementById('tg-mhs').className='tgl-btn'+(fMhs?' on':'');hitF();}
 function tgF(){fBdr=!fBdr;document.getElementById('tgf').className='tgl-btn'+(fBdr?' on':'');hitF();}
 function hitF(){var n=selS.length;if(n===0){document.getElementById('harga-prev').style.display='none';return;}var x=fBdr?20000:0,dis=fMhs?DIS_MHS:0,tarif=curTarif+x-dis,total=tarif*n;document.getElementById('harga-prev').style.display='block';document.getElementById('hp-dasar').textContent=fmtRp(curTarif)+'/pnp';document.getElementById('hp-bdr-row').style.display=fBdr?'flex':'none';document.getElementById('hp-dis-row').style.display=fMhs?'flex':'none';if(fMhs)document.getElementById('hp-dis').textContent='-'+fmtRp(DIS_MHS)+'/pnp x'+n;document.getElementById('hp-total').textContent=fmtRp(total);}
@@ -1067,8 +1079,8 @@ function renderDash(){
 }
 
 /* ── NAV ── */
-function SW(name,el){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('pg-'+name).classList.add('active');el.classList.add('active');if(name==='pesanan')renderP();if(name==='dashboard')renderDash();if(name==='setoran')renderRekon();if(name==='laporan')renderLaporan();if(name==='armada')renderServis();if(name==='gaji')renderGaji();if(name==='kontrol')renderKontrol();}
-function SWN(name){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('pg-'+name).classList.add('active');document.querySelectorAll('.tab').forEach(function(t){if(t.getAttribute('onclick')&&t.getAttribute('onclick').indexOf("'"+name+"'")!==-1)t.classList.add('active');});if(name==='pesanan')renderP();if(name==='dashboard')renderDash();if(name==='setoran')renderRekon();if(name==='laporan')renderLaporan();if(name==='armada')renderServis();if(name==='gaji')renderGaji();if(name==='kontrol')renderKontrol();}
+function SW(name,el){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('pg-'+name).classList.add('active');el.classList.add('active');if(name==='pesanan')renderP();if(name==='dashboard')renderDash();if(name==='setoran')renderRekon();if(name==='laporan')renderLaporan();if(name==='armada')renderServis();if(name==='gaji')renderGaji();if(name==='kontrol')renderKontrol();if(name==='tambah'){if(!document.getElementById('f-tgl').value)document.getElementById('f-tgl').value=today;selS=[];redrawFS();cekKonflik();hitF();}}
+function SWN(name){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('pg-'+name).classList.add('active');document.querySelectorAll('.tab').forEach(function(t){if(t.getAttribute('onclick')&&t.getAttribute('onclick').indexOf("'"+name+"'")!==-1)t.classList.add('active');});if(name==='pesanan')renderP();if(name==='dashboard')renderDash();if(name==='setoran')renderRekon();if(name==='laporan')renderLaporan();if(name==='armada')renderServis();if(name==='gaji')renderGaji();if(name==='kontrol')renderKontrol();if(name==='tambah'){if(!document.getElementById('f-tgl').value)document.getElementById('f-tgl').value=today;selS=[];redrawFS();cekKonflik();hitF();}}
 function swType(t){var isT=t==='travel';document.getElementById('f-travel').style.display=isT?'block':'none';document.getElementById('f-rental').style.display=isT?'none':'block';document.getElementById('tb-tv').className='tbtn'+(isT?' active':'');document.getElementById('tb-rt').className='tbtn'+(!isT?' active':'');}
 function renderAll(){renderDash();renderP();renderLaporan();renderGaji();renderRekon();}
 
@@ -1076,7 +1088,8 @@ document.getElementById('mov').addEventListener('click',function(e){if(e.target=
 document.getElementById('rek-bln').value=today.slice(0,7);
 document.getElementById('b-tgl').value=today;
 document.getElementById('sim-tgl').value=today;
-onRC();redrawFS();pilihArm(1);
+document.getElementById('f-tgl').value=today;
+onRC();redrawFS();cekKonflik();pilihArm(1);
 </script>
 </body>
 </html>
