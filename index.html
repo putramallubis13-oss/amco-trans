@@ -321,7 +321,12 @@ select.fi{appearance:none}
   <div class="sec">Pesanan Baru</div>
   <div class="tbtn-row"><div class="tbtn active" id="tb-tv" onclick="swType('travel')">Travel</div><div class="tbtn" id="tb-rt" onclick="swType('rental')">Rental</div></div>
   <div id="f-travel">
-    <div class="fg"><div class="fl">Nama Pemesan *</div><input class="fi" id="f-nama" type="text" placeholder="Nama lengkap"></div>
+    <div class="fg"><div class="fl">Nama Pemesan *</div>
+      <div style="position:relative">
+        <input class="fi" id="f-nama" type="text" placeholder="Nama lengkap" autocomplete="off" oninput="showAC('f-nama','f-hp','ac-tv')">
+        <div id="ac-tv" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:.5px solid var(--bd);border-radius:0 0 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:50;max-height:160px;overflow-y:auto"></div>
+      </div>
+    </div>
     <div class="fg"><div class="fl">No. HP *</div><input class="fi" id="f-hp" type="tel" placeholder="08xx-xxxx-xxxx"></div>
     <div class="tgl-wrap" style="background:#f3e8ff;border:.5px solid #c084fc;border-radius:7px;padding:7px 10px;margin-bottom:7px">
       <div style="font-size:10px;font-weight:600;color:#6b21a8"><i class="ti ti-school" style="margin-right:3px"></i>Mahasiswa — Diskon Rp 10.000/kursi</div>
@@ -368,14 +373,18 @@ select.fi{appearance:none}
     <button class="btn-pr" id="btn-simpan" onclick="simpan()">Simpan Pesanan</button>
   </div>
   <div id="f-rental" style="display:none">
-    <div class="fg"><div class="fl">Nama Penyewa *</div><input class="fi" id="r-nama" type="text" placeholder="Nama lengkap"></div>
+    <div class="fg"><div class="fl">Nama Penyewa *</div>
+      <div style="position:relative">
+        <input class="fi" id="r-nama" type="text" placeholder="Nama lengkap" autocomplete="off" oninput="showAC('r-nama','r-hp','ac-rt')">
+        <div id="ac-rt" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:.5px solid var(--bd);border-radius:0 0 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:50;max-height:160px;overflow-y:auto"></div>
+      </div>
+    </div>
     <div class="fg"><div class="fl">No. HP</div><input class="fi" id="r-hp" type="tel" placeholder="08xx"></div>
     <div class="fg"><div class="fl">Armada</div><select class="fi" id="r-arm" onchange="cekKonflikR()"><option value="Zakaria">Hiace 8 - Zakaria (AB 7845 HH)</option><option value="Rahmat Hidayat">Hiace 9 - Rahmat (AB 7167 BE)</option></select></div>
     <div class="fg"><div class="fl">Tanggal Mulai *</div><input class="fi" id="r-mul" type="date" onchange="cekKonflikR();hitR()"></div>
     <div class="fg"><div class="fl">Tanggal Selesai *</div><input class="fi" id="r-sel" type="date" onchange="cekKonflikR();hitR()"></div>
-    <div class="fg"><div class="fl">Jatuh Tempo Pelunasan</div><input class="fi" id="r-jt" type="date"></div>
     <div class="conflict-box" id="conflict-box-r"><i class="ti ti-alert-circle" style="font-size:14px;flex-shrink:0"></i><div id="conflict-msg-r"></div></div>
-    <div class="fg"><div class="fl">Tipe Rental</div><select class="fi" id="r-tip"><option>Dengan Driver</option><option>Lepas Kunci</option></select></div>
+    <div class="fg"><div class="fl">Rute / Tujuan Rental *</div><input class="fi" id="r-rute" type="text" placeholder="Contoh: Lubuk Sikaping - Medan, Padang - Pekanbaru"></div>
     <div class="tgl-wrap" style="background:#fdecea;border:.5px solid #f5b7b1;border-radius:7px;padding:7px 10px;margin-bottom:7px">
       <div><div style="font-size:10px;font-weight:600;color:#a02020"><i class="ti ti-map-2" style="margin-right:3px"></i>Luar Sumbar — Fee driver Rp 200.000/hari</div><div style="font-size:9px;color:#c0392b;margin-top:1px">Fee rental luar Sumbar lebih tinggi dari biasa (Rp 100.000/hari)</div></div>
       <button class="tgl-btn" id="tg-lsb" onclick="tgLSB()"></button>
@@ -586,6 +595,42 @@ select.fi{appearance:none}
   </div>
   <div class="sec">Riwayat Pembayaran</div>
   <div id="gaji-rw-all"></div>
+  <div class="sec">Kasbon Driver</div>
+  <div style="background:#fef9e7;border:.5px solid #f0c040;border-radius:9px;padding:9px 12px;margin-bottom:9px;font-size:10px;color:#9a6b0a;line-height:1.6">
+    Input kasbon langsung dipotong dari gaji + fee driver. Driver bisa lihat saldo terkini di APK Driver.
+  </div>
+  <!-- FORM INPUT KASBON -->
+  <div class="card" style="margin-bottom:9px">
+    <div class="fg"><div class="fl">Driver</div>
+      <select class="fi" id="kb-drv" onchange="hitKasbonAdmin()">
+        <option value="Zakaria">Zakaria</option>
+        <option value="Rahmat Hidayat">Rahmat Hidayat</option>
+      </select>
+    </div>
+    <div id="kb-saldo-box" style="background:#f4f6fa;border-radius:8px;padding:8px 11px;margin-bottom:8px;font-size:10px">
+      <div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--mt)">Gaji Pokok</span><span id="kb-pokok">Rp 0</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:#1e7e44">Fee Terkumpul</span><span id="kb-fee" style="color:#1e7e44;font-weight:600">Rp 0</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--dn)">Potongan</span><span id="kb-pot" style="color:var(--dn)">Rp 0</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--warn)">Kasbon Sebelumnya</span><span id="kb-prev" style="color:var(--warn)">Rp 0</span></div>
+      <div style="height:.5px;background:var(--bd);margin:5px 0"></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;padding:2px 0"><span>Saldo Tersedia</span><span id="kb-saldo" style="color:var(--sc)">Rp 0</span></div>
+    </div>
+    <div class="fg"><div class="fl">Jumlah Kasbon (Rp) *</div>
+      <input class="fi" type="number" id="kb-jml" placeholder="Jumlah yang dikasbon" oninput="hitKasbonAdmin()">
+    </div>
+    <div class="fg"><div class="fl">Keterangan *</div>
+      <input class="fi" type="text" id="kb-ket" placeholder="Contoh: Kasbon Juni, keperluan sekolah...">
+    </div>
+    <div id="kb-preview" style="display:none;background:var(--pr);border-radius:8px;padding:9px 12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:rgba(255,255,255,.65)">Saldo Sebelum</span><span style="color:#fff;font-weight:600" id="kb-prev-saldo">Rp 0</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:var(--warn)">Kasbon Dipotong</span><span style="color:var(--warn);font-weight:700" id="kb-prev-jml">Rp 0</span></div>
+      <div style="height:.5px;background:rgba(255,255,255,.2);margin:5px 0"></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding:2px 0"><span style="color:var(--ac)">Sisa Gaji Driver</span><span style="color:var(--ac)" id="kb-prev-sisa">Rp 0</span></div>
+    </div>
+    <button class="btn-ac" onclick="simpanKasbon()"><i class="ti ti-scissors" style="margin-right:4px"></i>Potong Kasbon</button>
+  </div>
+  <div class="sec">Riwayat Kasbon</div>
+  <div id="kasbon-list-admin"><div class="kosong"><i class="ti ti-coin"></i><div style="font-size:11px">Belum ada kasbon.</div></div></div>
 </div>
 <!-- KONTROL -->
 <div id="pg-kontrol" class="pg">
@@ -624,7 +669,8 @@ select.fi{appearance:none}
 const SB_URL='https://mzezxeomggazvrpuwpgu.supabase.co';
 const SB_KEY='sb_publishable_fBI3n7VG_4cqJIGMvcphww_IAzX8lxh';
 const sb=supabase.createClient(SB_URL,SB_KEY);
-var DB=[],SETOR=[],BIAYA=[],LOGS=[],GAJI_RW=[],FEE_LOG=[],LOCKS2=[];
+var DB=[],SETOR=[],BIAYA=[],LOGS=[],GAJI_RW=[],FEE_LOG=[],LOCKS2=[],KASBON_ALL=[];
+var KCTR=1;
 var GAJI_COMP={'Zakaria':{pokok:3000000,potongan:0,dibayar:0},'Rahmat Hidayat':{pokok:3000000,potongan:0,dibayar:0}};
 var SRV_ST={1:{km:0,kmSaved:0,kmTime:'',riwayat:{},nextKm:{}},2:{km:0,kmSaved:0,kmTime:'',riwayat:{},nextKm:{}}};
 var CTR=1,SCTR=1,BCTR=1,GCTR=1,FCTR=1;
@@ -662,7 +708,7 @@ function setSS(t,m){var e=document.getElementById('sync-status');if(!e)return;e.
 async function loadAll(){
   setSS('syncing','Memuat...');
   try{
-    var[p,s,b,f,gc,gr,lg,srv]=await Promise.all([
+    var[p,s,b,f,gc,gr,lg,srv,kb]=await Promise.all([
       sb.from('pesanan').select('*').order('created_at',{ascending:false}),
       sb.from('setoran').select('*').order('created_at',{ascending:false}),
       sb.from('biaya').select('*').order('created_at',{ascending:false}),
@@ -670,12 +716,15 @@ async function loadAll(){
       sb.from('gaji_comp').select('*'),
       sb.from('gaji_rw').select('*').order('created_at',{ascending:false}),
       sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(50),
-      sb.from('servis_state').select('*')
+      sb.from('servis_state').select('*'),
+      sb.from('kasbon').select('*').order('created_at',{ascending:false})
     ]);
     DB=(p.data||[]).map(r2p);SETOR=s.data||[];BIAYA=b.data||[];FEE_LOG=f.data||[];
     if(gc.data)gc.data.forEach(function(r){GAJI_COMP[r.driver]={pokok:r.pokok,potongan:r.potongan,dibayar:r.dibayar};});
     GAJI_RW=gr.data||[];
     LOGS=(lg.data||[]).map(function(l){return{tipe:l.tipe,aksi:l.aksi,det:l.detail,color:l.color,waktu:l.waktu};});
+    KASBON_ALL=kb.data||[];
+    if(KASBON_ALL.length){var ki=KASBON_ALL.map(function(x){return parseInt(x.id.replace('KB-',''))||0;});KCTR=Math.max.apply(null,ki)+1;}
     if(srv.data)srv.data.forEach(function(r){
       SRV_ST[r.armada].kmSaved=r.km_saved||0;SRV_ST[r.armada].kmTime=r.km_time||'';
       SRV_ST[r.armada].riwayat=r.riwayat||{};SRV_ST[r.armada].nextKm=r.next_km||{};
@@ -857,7 +906,7 @@ async function simpan(){
   selS=[];['f-nama','f-hp','f-tgl','f-cat'].forEach(function(x){document.getElementById(x).value='';});
   fBdr=false;fMhs=false;document.getElementById('tgf').className='tgl-btn';document.getElementById('tg-mhs').className='tgl-btn';
   document.getElementById('conflict-box').className='conflict-box';document.getElementById('btn-simpan').disabled=false;document.getElementById('btn-simpan').style.opacity='1';document.getElementById('harga-prev').style.display='none';
-  redrawFS();hitF();renderAll();T(id+' tersimpan!');setTimeout(function(){SWN('pesanan');},700);
+  redrawFS();hitF();renderAll();T(id+' tersimpan! Tambah pesanan lagi atau pindah ke tab Pesanan.');
 }
 async function simpanR(){
   var nama=document.getElementById('r-nama').value.trim(),mul=document.getElementById('r-mul').value,sel=document.getElementById('r-sel').value,h=parseInt(document.getElementById('r-hrg').value)||0;
@@ -865,13 +914,14 @@ async function simpanR(){
   var hari=Math.max(1,Math.round((new Date(sel)-new Date(mul))/864e5)),total=h*hari,dp=parseInt(document.getElementById('r-dp').value)||0,sisa=Math.max(0,total-dp),drv=document.getElementById('r-arm').value;
   var armStr=drv==='Zakaria'?'Hiace 8 · AB 7845 HH':'Hiace 9 · AB 7167 BE';
   var id='HT-'+String(CTR++).padStart(3,'0');
-  var obj={id,tipe:'rental',nama,hp:document.getElementById('r-hp').value.trim(),rute:'Rental Hiace '+(drv==='Zakaria'?'8':'9')+(fLSB?' (Luar Sumbar)':''),driver:drv,armStr,tgl:mul,mulai:mul,selesai:sel,jatuhTempo:document.getElementById('r-jt').value||sel,tipe_rental:document.getElementById('r-tip').value,harga:h,hari,total,dp,sisa,luar_sumbar:fLSB,catatan:document.getElementById('r-cat').value.trim(),status:'Menunggu',histori:[{waktu:new Date().toLocaleString('id-ID'),aksi:'Dibuat',tarif:total}]};
+  var ruteRental=document.getElementById('r-rute').value.trim()||('Rental Hiace '+(drv==='Zakaria'?'8':'9'))+(fLSB?' (Luar Sumbar)':'');
+  var obj={id,tipe:'rental',nama,hp:document.getElementById('r-hp').value.trim(),rute:ruteRental,driver:drv,armStr,tgl:mul,mulai:mul,selesai:sel,harga:h,hari,total,dp,sisa,luar_sumbar:fLSB,catatan:document.getElementById('r-cat').value.trim(),status:'Menunggu',histori:[{waktu:new Date().toLocaleString('id-ID'),aksi:'Dibuat',tarif:total}]};
   setSS('syncing','Menyimpan...');DB.unshift(obj);await svP(obj);await addLog('pesanan','Rental baru '+id,nama,'#27ae60');
-  ['r-nama','r-hp','r-mul','r-sel','r-jt','r-hrg','r-dp','r-cat'].forEach(function(x){document.getElementById(x).value='';});
+  ['r-nama','r-hp','r-mul','r-sel','r-rute','r-hrg','r-dp','r-cat'].forEach(function(x){document.getElementById(x).value='';});
   fLSB=false;document.getElementById('tg-lsb').className='tgl-btn';
   document.getElementById('r-summary').style.display='none';document.getElementById('conflict-box-r').className='conflict-box';
   document.getElementById('btn-simpan-r').disabled=false;document.getElementById('btn-simpan-r').style.opacity='1';
-  renderAll();T(id+' tersimpan!');setTimeout(function(){SWN('pesanan');},700);
+  renderAll();T(id+' tersimpan! Tambah pesanan lagi atau pindah ke tab Pesanan.');
 }
 
 /* ── SETORAN + FEE ── */
@@ -934,6 +984,92 @@ async function setStatus(id,ns){var p=DB.find(function(x){return x.id===id;});if
 function setFS(s,el){fStat=s;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});el.classList.add('active');renderP();}
 
 /* ── GAJI ── */
+
+/* ══════════════════════════════════════════
+   KASBON — Admin langsung potong
+══════════════════════════════════════════ */
+function getSaldoKasbon(drv){
+  var fee=getFee(drv),c=GAJI_COMP[drv]||{};
+  var totalKasbon=KASBON_ALL.filter(function(k){return k.driver===drv;}).reduce(function(s,k){return s+k.jumlah;},0);
+  return (c.pokok||0)+fee-(c.potongan||0)-totalKasbon;
+}
+
+function hitKasbonAdmin(){
+  var drv=document.getElementById('kb-drv').value;
+  var jml=parseInt(document.getElementById('kb-jml').value)||0;
+  var fee=getFee(drv),c=GAJI_COMP[drv]||{};
+  var totalKasbon=KASBON_ALL.filter(function(k){return k.driver===drv;}).reduce(function(s,k){return s+k.jumlah;},0);
+  var saldo=(c.pokok||0)+fee-(c.potongan||0)-totalKasbon;
+  /* Update info saldo */
+  document.getElementById('kb-pokok').textContent=fmtRp(c.pokok||0);
+  document.getElementById('kb-fee').textContent=fmtRp(fee);
+  document.getElementById('kb-pot').textContent=fmtRp(c.potongan||0);
+  document.getElementById('kb-prev').textContent=fmtRp(totalKasbon);
+  document.getElementById('kb-saldo').textContent=fmtRp(saldo);
+  document.getElementById('kb-saldo').style.color=saldo>0?'var(--sc)':'var(--dn)';
+  /* Preview */
+  var prev=document.getElementById('kb-preview');
+  if(jml>0){
+    prev.style.display='block';
+    document.getElementById('kb-prev-saldo').textContent=fmtRp(saldo);
+    document.getElementById('kb-prev-jml').textContent=fmtRp(jml);
+    var sisa=saldo-jml;
+    document.getElementById('kb-prev-sisa').textContent=fmtRp(sisa);
+    document.getElementById('kb-prev-sisa').style.color=sisa>=0?'var(--ac)':'var(--dn)';
+  }else prev.style.display='none';
+}
+
+async function simpanKasbon(){
+  var drv=document.getElementById('kb-drv').value;
+  var jml=parseInt(document.getElementById('kb-jml').value)||0;
+  var ket=document.getElementById('kb-ket').value.trim();
+  if(!jml){T('Masukkan jumlah kasbon','err');return;}
+  if(!ket){T('Masukkan keterangan','err');return;}
+  var saldo=getSaldoKasbon(drv);
+  if(jml>saldo){T('Kasbon melebihi saldo ('+fmtRp(saldo)+')','err');return;}
+  setSyncStatus('syncing','Menyimpan...');
+  var id='KB-'+String(KCTR++).padStart(3,'0');
+  var k={id,driver:drv,jumlah:jml,keterangan:ket,tgl:today,status:'Dicairkan'};
+  var{error}=await sb.from('kasbon').insert(k);
+  if(error){T('Gagal: '+error.message,'err');return;}
+  KASBON_ALL.unshift(k);
+  /* Catat sebagai pengeluaran otomatis */
+  var b={id:'BY-'+String(BCTR++).padStart(3,'0'),kategori:'Gaji Driver',tgl:today,nama:'Kasbon '+drv+' - '+ket,jumlah:jml};
+  BIAYA.unshift(b);await svB(b);
+  await addLog('gaji','Kasbon '+drv,fmtRp(jml),'#f39c12');
+  document.getElementById('kb-jml').value='';
+  document.getElementById('kb-ket').value='';
+  document.getElementById('kb-preview').style.display='none';
+  setSyncStatus('ok','Tersimpan');
+  T('Kasbon '+drv+' Rp '+fmtRp(jml)+' berhasil dipotong!');
+  renderGaji();renderLaporan();
+}
+
+function renderKasbon(){
+  var el=document.getElementById('kasbon-list-admin');if(!el)return;
+  /* Update saldo box saat render */
+  hitKasbonAdmin();
+  if(!KASBON_ALL.length){
+    el.innerHTML='<div class="kosong"><i class="ti ti-coin"></i><div style="font-size:11px">Belum ada kasbon.</div></div>';
+    return;
+  }
+  el.innerHTML=KASBON_ALL.map(function(k){
+    var av=k.driver==='Zakaria'?'av-b':'av-g',ini=k.driver==='Zakaria'?'ZK':'RH';
+    return'<div style="display:flex;align-items:center;gap:9px;background:#fef9e7;border-radius:9px;padding:9px 11px;margin-bottom:6px">'+
+      '<div class="drv-av '+av+'" style="width:30px;height:30px;font-size:11px">'+ini+'</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:11px;font-weight:700">'+k.driver+'</div>'+
+        '<div style="font-size:10px;color:var(--mt)">'+k.tgl+' · '+k.keterangan+'</div>'+
+        '<div style="font-size:9px;color:var(--mt);margin-top:1px">'+k.id+'</div>'+
+      '</div>'+
+      '<div style="text-align:right">'+
+        '<div style="font-size:13px;font-weight:700;color:var(--warn)">'+fmtRp(k.jumlah)+'</div>'+
+        '<div style="font-size:9px;font-weight:600;padding:1px 6px;border-radius:20px;background:#eafaf1;color:#1e7e44;margin-top:2px">'+k.status+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
 function renderGaji(){
   ['Zakaria','Rahmat Hidayat'].forEach(function(drv){
     var pfx=drv==='Zakaria'?'zk':'rh',c=GAJI_COMP[drv],fee=getFee(drv),net=c.pokok+fee-c.potongan,sisa=Math.max(0,net-c.dibayar);
@@ -962,6 +1098,7 @@ function renderGaji(){
   document.getElementById('gaji-tot-rh').textContent=fmtRp(n2);
   document.getElementById('gaji-rw-all').innerHTML=GAJI_RW.length?GAJI_RW.map(function(g){return'<div class="card" style="margin-bottom:7px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:11px;font-weight:600">'+g.driver+'</div><div style="font-size:10px;color:var(--mt)">'+g.tgl+' · '+g.keterangan+'</div></div><div style="font-size:13px;font-weight:700;color:var(--sc)">'+fmtRp(g.jumlah)+'</div></div></div>';}).join(''):'<div class="kosong"><i class="ti ti-wallet"></i><div style="font-size:11px">Belum ada riwayat.</div></div>';
   document.getElementById('db-fee').textContent=fmtRp(f1+f2);
+  renderKasbon();
 }
 function openGajiForm(drv){
   var c=GAJI_COMP[drv],fee=getFee(drv);
@@ -1163,20 +1300,22 @@ function renderPiutang(){
   document.getElementById('db-piutang').textContent=jt;
 }
 
-/* ── CARD PESANAN ── */
-function sCls(s){return s==='Jalan'?'p-j':s==='Selesai'?'p-s':s==='Batal'?'p-b':'p-p';}
-function cardHTML(p){
-  var rows='';
-  if(p.tipe==='travel'){rows='<div class="prow"><i class="ti ti-calendar"></i><span class="prow-v">'+p.tgl+(p.jadwal?' · '+p.jadwal:'')+'</span></div>'+(p.seats&&p.seats.length?'<div class="prow"><i class="ti ti-armchair"></i><span class="prow-v">Kursi '+p.seats.join(', ')+'</span></div>':'')+'<div class="prow"><i class="ti ti-user"></i><span class="prow-v">'+p.driver+' · '+p.armStr+'</span></div>'+(p.mahasiswa?'<div class="prow"><i class="ti ti-school"></i><span class="prow-v" style="color:#6b21a8">Mahasiswa · Diskon '+fmtRp(DIS_MHS)+'/kursi</span></div>':'')+(p.bandara?'<div class="prow"><i class="ti ti-plane"></i><span class="prow-v">Antar/Jemput Bandara</span></div>':'');}
-  else{rows='<div class="prow"><i class="ti ti-calendar"></i><span class="prow-v">'+p.mulai+' - '+p.selesai+'</span></div><div class="prow"><i class="ti ti-moon"></i><span class="prow-v">'+p.hari+' hari · '+p.tipe_rental+'</span></div>'+(p.luar_sumbar?'<div class="prow"><i class="ti ti-map-2"></i><span class="prow-v" style="color:#a02020;font-weight:700">Luar Sumbar · Fee Rp 200.000/hari</span></div>':'')+'<div class="prow"><i class="ti ti-user"></i><span class="prow-v">'+p.driver+' · '+p.armStr+'</span></div><div class="prow"><i class="ti ti-coin"></i><span class="prow-v">DP: '+(p.dp>0?fmtRp(p.dp):'Belum')+(p.jatuhTempo?' · JT: '+p.jatuhTempo:'')+'</span></div><div class="prow"><i class="ti ti-cash"></i><span class="prow-v" style="'+(p.sisa>0?'color:var(--dn);font-weight:700':'color:var(--sc);font-weight:700')+'">'+(p.sisa===0?'Lunas':'Sisa: '+fmtRp(p.sisa))+'</span></div>';}
-  var eBtn=p.status!=='Batal'&&p.status!=='Selesai'?'<button onclick="openEdit(\''+p.id+'\')" class="abtn abtn-e">Edit</button>':'';
-  var jBtn=p.status==='Menunggu'?'<button onclick="setStatus(\''+p.id+'\',\'Jalan\')" class="abtn abtn-j">Jalan</button>':'';
-  var sBtn=p.status==='Jalan'?'<button onclick="setStatus(\''+p.id+'\',\'Selesai\')" class="abtn abtn-s">Selesai</button>':'';
-  var icoC=p.rute&&p.rute.includes('Rao')?'ico-g':p.rute&&(p.rute.includes('Panjang')||p.rute.includes('Bukit'))?'ico-w':'ico-b';
-  var icoClr=p.rute&&p.rute.includes('Rao')?'#27ae60':p.rute&&(p.rute.includes('Panjang')||p.rute.includes('Bukit'))?'#b7770d':'#2980b9';
-  return'<div class="pcard"><div class="pcard-head"><div class="pcard-ico '+icoC+'"><i class="ti '+(p.tipe==='rental'?'ti-car':'ti-bus')+'" style="color:'+icoClr+'"></i></div><div class="pcard-htxt"><div class="pcard-id">'+p.id+'</div><div class="pcard-rute">'+p.rute+'</div><span class="pcard-badge '+(p.tipe==='travel'?'badge-tv':'badge-rt')+'">'+(p.tipe==='travel'?'Travel':'Rental')+'</span>'+(p.mahasiswa?' <span class="pcard-badge badge-mhs">MHS</span>':'')+'</div><div class="pcard-right"><div class="pcard-price">'+fmtRp(p.total)+'</div><div class="pill '+sCls(p.status)+'">'+p.status+'</div></div></div><div class="pcard-rows">'+rows+'</div><div class="pcard-divider"></div><div class="pcard-chips"><span class="chip" onclick="cpTxt(\''+p.nama+'\')"><i class="ti ti-user"></i>'+p.nama+'</span>'+(p.hp?'<span class="chip" onclick="cpTxt(\''+p.hp+'\')"><i class="ti ti-phone"></i>'+p.hp+'</span>':'')+'</div>'+(eBtn||jBtn||sBtn?'<div class="pcard-actions">'+eBtn+jBtn+sBtn+'</div>':'')+'</div>';
+/* ── CARD PESANAN — dikelompokkan per tujuan+tanggal+jam ── */
+function getTujuan(rute){
+  if(!rute)return rute;
+  var p=rute.split('→');if(p.length>1)return p[p.length-1].trim();
+  p=rute.split('-');if(p.length>1)return p[p.length-1].trim();
+  return rute;
 }
+function getGrupKey(p){return getTujuan(p.rute)+'|'+(p.tgl||'')+'|'+(p.jadwal||'')+'|'+(p.driver||'');}
+function sCls(s){return s==='Jalan'?'p-j':s==='Selesai'?'p-s':s==='Batal'?'p-b':'p-p';}
 function cpTxt(t){try{navigator.clipboard.writeText(t).then(function(){T('Tersalin: '+t);});}catch(e){T('Tersalin: '+t);}}
+
+function toggleDetail(gid){
+  var el=document.getElementById('det-'+gid);
+  if(el)el.style.display=el.style.display==='none'?'block':'none';
+}
+
 function renderP(){
   var tgl=document.getElementById('fil-tgl').value,drv=document.getElementById('fil-drv').value;
   var q=getSearchQ();
@@ -1188,7 +1327,153 @@ function renderP(){
     return true;
   });
   var el=document.getElementById('pesanan-list');
-  el.innerHTML=data.length?data.map(cardHTML).join(''):'<div class="kosong"><i class="ti ti-inbox"></i><div style="font-size:11px">'+(q?'Tidak ada hasil pencarian.':'Tidak ada pesanan.')+'</div></div>';
+  if(!data.length){el.innerHTML='<div class="kosong"><i class="ti ti-inbox"></i><div style="font-size:11px">'+(q?'Tidak ada hasil pencarian.':'Tidak ada pesanan.')+'</div></div>';return;}
+
+  /* Pisah travel dan rental */
+  var travels=data.filter(function(p){return p.tipe==='travel';});
+  var rentals=data.filter(function(p){return p.tipe==='rental';});
+
+  /* Kelompokkan travel dan urutkan tgl desc, jadwal asc */
+  var groups={};var grupOrder=[];
+  travels.forEach(function(p){
+    var k=getGrupKey(p);
+    if(!groups[k]){groups[k]=[];grupOrder.push(k);}
+    groups[k].push(p);
+  });
+  /* Sort grup: tanggal terbaru dulu, lalu jadwal pagi sebelum sore */
+  grupOrder.sort(function(a,b){
+    var pa=a.split('|'),pb=b.split('|');
+    var tglA=pa[1],tglB=pb[1];
+    if(tglA!==tglB)return tglB>tglA?1:-1; /* terbaru dulu */
+    var jA=pa[2],jB=pb[2];
+    return jA>jB?1:-1; /* 10.00 sebelum 17.00 */
+  });
+  /* Sort rental: tgl mulai terbaru dulu */
+  rentals.sort(function(a,b){
+    var tA=a.mulai||a.tgl||'',tB=b.mulai||b.tgl||'';
+    return tB>tA?1:-1;
+  });
+
+  var html='';
+
+  /* Render grup travel */
+  grupOrder.forEach(function(k){
+    var pes=groups[k];
+    var first=pes[0];
+    var tujuan=getTujuan(first.rute);
+    var totPend=pes.reduce(function(s,p){return s+p.total;},0);
+    var totPnp=pes.reduce(function(s,p){return s+p.pnp;},0);
+    var pesIds=pes.map(function(p){return p.id;}).join('_');
+    var gid='g_'+pesIds;
+    /* Status grup */
+    var statuses=pes.map(function(p){return p.status;});
+    var grupSt=statuses.indexOf('Jalan')!==-1?'Jalan':statuses.every(function(s){return s==='Selesai';})?'Selesai':statuses.every(function(s){return s==='Batal';})?'Batal':'Menunggu';
+    /* Semua kursi */
+    var allSeats=[];pes.forEach(function(p){(p.seats||[]).forEach(function(s){allSeats.push(s);});});
+    allSeats.sort(function(a,b){return a-b;});
+    /* Warna driver */
+    var drvCol=first.driver==='Zakaria'?'#1a3a5c':'#1a5c3a';
+
+    html+='<div style="background:var(--cd);border-radius:12px;border:.5px solid var(--bd);margin-bottom:9px;overflow:hidden">'+
+      /* HEADER GRUP */
+      '<div style="background:'+drvCol+';padding:11px 13px;cursor:pointer" onclick="toggleDetail(\''+gid+'\')">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
+          '<div style="display:flex;align-items:center;gap:7px">'+
+            '<i class="ti ti-map-pin" style="font-size:14px;color:var(--ac)"></i>'+
+            '<div>'+
+              '<div style="font-size:14px;font-weight:700;color:#fff">→ '+tujuan+'</div>'+
+              '<div style="font-size:10px;color:rgba(255,255,255,.7)">'+first.tgl+' · '+(first.jadwal||'Tanpa jadwal')+'</div>'+
+            '</div>'+
+          '</div>'+
+          '<div style="text-align:right">'+
+            '<div style="font-size:14px;font-weight:700;color:var(--ac)">'+fmtRp(totPend)+'</div>'+
+            '<div style="font-size:10px;color:rgba(255,255,255,.6)">'+totPnp+' penumpang</div>'+
+          '</div>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;justify-content:space-between">'+
+          '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+
+            '<span style="font-size:9px;color:rgba(255,255,255,.7)">'+first.driver+' · '+pes.length+' pesanan · Kursi '+allSeats.join(', ')+'</span>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:5px">'+
+            '<span class="pill '+sCls(grupSt)+'">'+grupSt+'</span>'+
+            '<i class="ti ti-chevron-down" style="font-size:12px;color:rgba(255,255,255,.6)"></i>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      /* DETAIL PENUMPANG — collapsed by default */
+      '<div id="det-'+gid+'" style="display:none">'+
+        pes.map(function(p){
+          var eBtn=p.status!=='Batal'&&p.status!=='Selesai'?'<button data-id="'+p.id+'" onclick="openEdit(this.dataset.id)" class="abtn abtn-e" style="font-size:9px;padding:3px 9px">Edit</button>':'';
+          var jBtn=p.status==='Menunggu'?'<button data-id="'+p.id+'" onclick="setStatus(this.dataset.id,\'Jalan\')" class="abtn abtn-j" style="font-size:9px;padding:3px 9px">Jalan</button>':'';
+          var sBtn=p.status==='Jalan'?'<button data-id="'+p.id+'" onclick="setStatus(this.dataset.id,\'Selesai\')" class="abtn abtn-s" style="font-size:9px;padding:3px 9px">Selesai</button>':'';
+          return'<div style="padding:11px 13px;border-bottom:.5px solid var(--bd)">'+
+            /* Nomor kursi besar */
+            '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:7px">'+
+              '<div style="background:var(--pr);border-radius:8px;padding:5px 9px;min-width:36px;text-align:center;flex-shrink:0">'+
+                '<div style="font-size:9px;color:rgba(255,255,255,.65)">Kursi</div>'+
+                '<div style="font-size:13px;font-weight:700;color:var(--ac)">'+(p.seats||[]).join(' ')+'</div>'+
+              '</div>'+
+              '<div style="flex:1">'+
+                /* Nama & HP besar */
+                '<div style="font-size:14px;font-weight:700;color:var(--tx);cursor:pointer;display:flex;align-items:center;gap:5px" onclick="cpTxt(\''+p.nama+'\')">'+p.nama+'<i class="ti ti-copy" style="font-size:11px;color:var(--mt);opacity:.6"></i></div>'+
+                (p.hp?'<div style="font-size:13px;font-weight:600;color:#2980b9;cursor:pointer;display:flex;align-items:center;gap:5px;margin-top:2px" onclick="cpTxt(\''+p.hp+'\')">'+p.hp+'<i class="ti ti-copy" style="font-size:11px;color:#2980b9;opacity:.6"></i></div>':'')+
+                '<div style="font-size:10px;color:var(--mt);margin-top:2px">'+p.rute+(p.mahasiswa?' · <span style="color:#6b21a8;font-weight:600">🎓 MHS</span>':'')+(p.bandara?' · <span style="color:#2980b9">✈ Bandara</span>':'')+'</div>'+
+              '</div>'+
+              '<div style="text-align:right;flex-shrink:0">'+
+                '<div style="font-size:12px;font-weight:700;color:var(--pr)">'+fmtRp(p.total)+'</div>'+
+                '<div class="pill '+sCls(p.status)+'" style="margin-top:3px">'+p.status+'</div>'+
+              '</div>'+
+            '</div>'+
+            (eBtn||jBtn||sBtn?'<div style="display:flex;gap:5px">'+eBtn+jBtn+sBtn+'</div>':'')+
+          '</div>';
+        }).join('')+
+        /* Footer total */
+        '<div style="background:#f4f6fa;padding:9px 13px;display:flex;justify-content:space-between;align-items:center">'+
+          '<span style="font-size:10px;color:var(--mt)">'+pes.length+' pesanan · '+totPnp+' penumpang</span>'+
+          '<span style="font-size:13px;font-weight:700;color:var(--pr)">'+fmtRp(totPend)+'</span>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  });
+
+  /* Render rental — individual tapi ringkas, klik untuk detail */
+  rentals.forEach(function(p){
+    var gid='r_'+p.id;
+    html+='<div style="background:var(--cd);border-radius:12px;border:.5px solid #a9dfbf;margin-bottom:9px;overflow:hidden">'+
+      '<div style="background:linear-gradient(135deg,#1a5c3a,#27ae60);padding:11px 13px;cursor:pointer" onclick="toggleDetail(\''+gid+'\')">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between">'+
+          '<div>'+
+            '<div style="font-size:8px;font-weight:700;background:rgba(255,255,255,.2);color:#fff;padding:2px 7px;border-radius:20px;display:inline-block;margin-bottom:4px">RENTAL'+(p.luar_sumbar?' · LUAR SUMBAR':'')+'</div>'+
+            '<div style="font-size:14px;font-weight:700;color:#fff">'+p.nama+'</div>'+
+            '<div style="font-size:10px;color:rgba(255,255,255,.75)">'+(p.mulai||p.tgl)+' → '+(p.selesai||'-')+' · '+p.hari+' hari · '+p.driver+'</div>'+
+          '</div>'+
+          '<div style="text-align:right">'+
+            '<div style="font-size:14px;font-weight:700;color:var(--ac)">'+fmtRp(p.total)+'</div>'+
+            '<div class="pill '+sCls(p.status)+'" style="margin-top:3px">'+p.status+'</div>'+
+            '<i class="ti ti-chevron-down" style="font-size:12px;color:rgba(255,255,255,.6);display:block;margin-top:3px"></i>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div id="det-'+gid+'" style="display:none;padding:11px 13px">'+
+        '<div style="font-size:10px;color:var(--mt);margin-bottom:6px">'+p.id+'</div>'+
+        (p.hp?'<div style="font-size:14px;font-weight:700;color:#2980b9;cursor:pointer;margin-bottom:4px;display:flex;align-items:center;gap:5px" onclick="cpTxt(\''+p.hp+'\')">'+p.hp+'<i class="ti ti-copy" style="font-size:11px;opacity:.6"></i></div>':'')+
+        '<div style="font-size:10px;color:var(--mt);margin-bottom:7px">'+p.rute+(p.tipe_rental?' · '+p.tipe_rental:'')+'</div>'+
+        '<div style="background:#f4f6fa;border-radius:8px;padding:8px 11px;margin-bottom:8px">'+
+          '<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:var(--mt)">Total Sewa</span><span style="font-weight:700">'+fmtRp(p.total)+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:var(--mt)">DP</span><span>'+(p.dp>0?fmtRp(p.dp):'Belum ada')+'</span></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;font-weight:700"><span>Sisa Bayar</span><span style="color:'+(p.sisa>0?'var(--dn)':'var(--sc)')+'">'+( p.sisa===0?'Lunas':fmtRp(p.sisa))+'</span></div>'+
+          (p.jatuhTempo?'<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0"><span style="color:var(--mt)">Jatuh Tempo</span><span>'+p.jatuhTempo+'</span></div>':'')+
+        '</div>'+
+        '<div style="display:flex;gap:5px">'+
+          (p.status!=='Batal'&&p.status!=='Selesai'?'<button data-id="'+p.id+'" onclick="openEdit(this.dataset.id)" class="abtn abtn-e" style="font-size:9px;padding:3px 9px">Edit</button>':'')+
+          (p.status==='Menunggu'?'<button data-id="'+p.id+'" onclick="setStatus(this.dataset.id,\'Jalan\')" class="abtn abtn-j" style="font-size:9px;padding:3px 9px">Jalan</button>':'')+
+          (p.status==='Jalan'?'<button data-id="'+p.id+'" onclick="setStatus(this.dataset.id,\'Selesai\')" class="abtn abtn-s" style="font-size:9px;padding:3px 9px">Selesai</button>':'')+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  });
+
+  el.innerHTML=html;
 }
 
 /* ── EDIT PESANAN ── */
@@ -1309,7 +1594,58 @@ function updateNotifBadge(){
 /* ══════════════════════════════════════════
    SEARCH PESANAN
 ══════════════════════════════════════════ */
-function getSearchQ(){var el=document.getElementById('search-pes');return el?el.value.trim().toLowerCase():'';}
+/* ── AUTOCOMPLETE NAMA + HP ── */
+function getPelanggan(){
+  var map={};
+  DB.forEach(function(p){
+    if(!p.nama)return;
+    var key=p.nama.toLowerCase();
+    if(!map[key])map[key]={nama:p.nama,hp:p.hp||'',count:0};
+    map[key].count++;
+    if(p.hp)map[key].hp=p.hp;
+  });
+  return Object.values(map);
+}
+
+function showAC(namaId,hpId,acId){
+  var q=document.getElementById(namaId).value.trim().toLowerCase();
+  var ac=document.getElementById(acId);
+  if(q.length<1){ac.style.display='none';return;}
+  var all=getPelanggan().filter(function(x){return x.nama.toLowerCase().indexOf(q)===0;});
+  all.sort(function(a,b){return b.count-a.count;});
+  var list=all.slice(0,6);
+  if(!list.length){ac.style.display='none';return;}
+  ac.style.display='block';
+  ac.innerHTML=list.map(function(x){
+    var safeName=x.nama.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    var safeHp=(x.hp||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return'<div onclick="pilihAC(\''+namaId+'\',\''+hpId+'\',\''+acId+'\',\''+safeName+'\',\''+safeHp+'\')" '+
+      'style="padding:9px 12px;cursor:pointer;border-bottom:.5px solid var(--bd);display:flex;align-items:center;gap:9px" '+
+      'onmouseover="this.style.background=\'#f4f6fa\'" onmouseout="this.style.background=\'\'">'+
+      '<div style="width:28px;height:28px;border-radius:50%;background:var(--pr);color:var(--ac);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+x.nama.charAt(0).toUpperCase()+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:12px;font-weight:600;color:var(--tx)">'+x.nama+'</div>'+
+        (x.hp?'<div style="font-size:10px;color:var(--mt)">'+x.hp+'</div>':'<div style="font-size:10px;color:var(--mt);font-style:italic">Belum ada HP</div>')+
+      '</div>'+
+      '<div style="font-size:9px;color:var(--mt);background:#eaf4fb;padding:1px 6px;border-radius:20px">'+x.count+'x pesan</div>'+
+    '</div>';
+  }).join('');
+  setTimeout(function(){
+    document.addEventListener('click',function closeAC(e){
+      if(!ac.contains(e.target)&&e.target.id!==namaId){ac.style.display='none';}
+      document.removeEventListener('click',closeAC);
+    });
+  },100);
+}
+
+function pilihAC(namaId,hpId,acId,nama,hp){
+  document.getElementById(namaId).value=nama;
+  if(hp)document.getElementById(hpId).value=hp;
+  document.getElementById(acId).style.display='none';
+  T('Dipilih: '+nama+(hp?' · '+hp:''));
+}
+
+function getSearchQ(){var el=document.getElementById('fil-cari');return el?el.value.trim().toLowerCase():'';}
 
 /* ══════════════════════════════════════════
    BLOKIR TRAVEL JIKA DRIVER SUDAH JALAN
