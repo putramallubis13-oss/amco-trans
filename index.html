@@ -746,12 +746,12 @@ function cekKonflik(){
     document.getElementById('conflict-msg').textContent=drv+' sedang dalam perjalanan ('+jadwal+') — tidak bisa tambah pesanan di jam yang sama.';
     box.className='conflict-box show';btn.disabled=true;btn.style.opacity='0.5';return;
   }
-  /* Blokir hanya jika ada RENTAL driver yang sama di tanggal yang sama */
+  /* Blokir hanya jika ada RENTAL AKTIF (Menunggu/Jalan) driver yang sama di tanggal yang sama */
   var rentalBentrok=DB.filter(function(p){
-    return p.status!=='Batal'&&p.tipe==='rental'&&p.driver===drv&&getTgl(p).indexOf(tgl)!==-1;
+    return (p.status==='Menunggu'||p.status==='Jalan')&&p.tipe==='rental'&&p.driver===drv&&getTgl(p).indexOf(tgl)!==-1;
   });
   if(rentalBentrok.length){
-    document.getElementById('conflict-msg').textContent='Tidak bisa tambah travel — '+drv+' sudah ada rental di tanggal ini: '+rentalBentrok.map(function(p){return p.id;}).join(', ');
+    document.getElementById('conflict-msg').textContent='Tidak bisa tambah travel — '+drv+' masih ada rental aktif di tanggal ini: '+rentalBentrok.map(function(p){return p.id;}).join(', ');
     box.className='conflict-box show';btn.disabled=true;btn.style.opacity='0.5';return;
   }
   /* Travel + travel boleh — cek sisa kursi saja */
@@ -777,14 +777,16 @@ function cekKonflikR(){
   if(!mul){box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';return;}
   var e=sel||mul,c=new Date(mul),end=new Date(e),tl=[];
   while(c<=end){tl.push(c.toISOString().slice(0,10));c.setDate(c.getDate()+1);}
-  /* Blokir jika ada travel ATAU rental driver yang sama di tanggal overlap */
+  /* Hanya blokir jika ada pesanan AKTIF (Menunggu/Jalan) — yang sudah Selesai tidak dihitung */
   var k=DB.filter(function(p){
-    return p.status!=='Batal'&&p.driver===drv&&tl.some(function(t){return getTgl(p).indexOf(t)!==-1;});
+    return (p.status==='Menunggu'||p.status==='Jalan')&&
+           p.driver===drv&&
+           tl.some(function(t){return getTgl(p).indexOf(t)!==-1;});
   });
   if(k.length){
     var tvList=k.filter(function(p){return p.tipe==='travel';});
     var rtList=k.filter(function(p){return p.tipe==='rental';});
-    var msg='Tidak bisa tambah rental — '+drv+' sudah ada: ';
+    var msg='Tidak bisa tambah rental — '+drv+' masih ada pesanan aktif: ';
     if(tvList.length)msg+='Travel ('+tvList.map(function(p){return p.id;}).join(', ')+') ';
     if(rtList.length)msg+='Rental ('+rtList.map(function(p){return p.id;}).join(', ')+')';
     document.getElementById('conflict-msg-r').textContent=msg;
