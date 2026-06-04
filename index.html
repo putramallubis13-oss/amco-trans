@@ -203,6 +203,20 @@ select.fi{appearance:none}
 .modal{background:var(--cd);border-radius:16px 16px 0 0;padding:15px 13px 22px;width:100%;max-width:430px;max-height:90vh;overflow-y:auto}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:#fff;padding:8px 16px;border-radius:30px;font-size:11px;font-weight:500;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
+.notif-badge{position:absolute;top:-4px;right:-4px;background:var(--dn);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1}
+.tab-wrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px}
+.session-bar{background:var(--warn);padding:4px 12px;font-size:9px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+.laba-rugi-table{width:100%;border-collapse:collapse;font-size:10px}
+.laba-rugi-table th{background:var(--pr);color:#fff;padding:7px 9px;text-align:left;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.laba-rugi-table td{padding:7px 9px;border-bottom:.5px solid var(--bd);vertical-align:middle}
+.laba-rugi-table tr:last-child td{border-bottom:none}
+.laba-rugi-table tr.total-row td{font-weight:700;background:#f4f6fa}
+.laba-rugi-table tr.laba-row td{font-weight:700;background:var(--pr);color:#fff}
+.laba-rugi-table tr.rugi-row td{font-weight:700;background:var(--dn);color:#fff}
+.search-box{display:flex;gap:7px;margin-bottom:9px}
+.search-box input{flex:1;border:.5px solid var(--bd);border-radius:7px;padding:8px 11px;font-size:12px;background:var(--cd);color:var(--tx)}
+.search-box input:focus{outline:none;border-color:var(--pr)}
+.servis-alert{background:linear-gradient(135deg,#a02020,var(--dn));border-radius:11px;padding:11px 13px;margin-bottom:9px;color:#fff}
 </style>
 </head>
 <body>
@@ -231,18 +245,23 @@ select.fi{appearance:none}
   </div>
   <button onclick="logout()" style="background:rgba(255,255,255,.1);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer"><i class="ti ti-logout" style="font-size:13px;color:#fff"></i></button>
 </div>
+<div class="session-bar" id="session-bar" style="display:none">
+  <span><i class="ti ti-clock" style="margin-right:4px"></i>Sesi berakhir dalam <strong id="session-timer">30:00</strong></span>
+  <button onclick="resetSession()" style="background:rgba(255,255,255,.2);border:none;border-radius:5px;color:#fff;padding:2px 8px;font-size:9px;cursor:pointer">Perpanjang</button>
+</div>
 <div class="tabs">
   <div class="tab active" onclick="SW('dashboard',this)"><i class="ti ti-layout-dashboard"></i>Beranda</div>
   <div class="tab" onclick="SW('pesanan',this)"><i class="ti ti-list-check"></i>Pesanan</div>
   <div class="tab" onclick="SW('tambah',this)"><i class="ti ti-plus"></i>Tambah</div>
-  <div class="tab" onclick="SW('setoran',this)"><i class="ti ti-cash"></i>Setoran</div>
+  <div class="tab" onclick="SW('setoran',this)" style="position:relative"><div class="tab-wrap"><i class="ti ti-cash"></i>Setoran</div><span id="notif-setor" class="notif-badge" style="display:none">0</span></div>
   <div class="tab" onclick="SW('laporan',this)"><i class="ti ti-chart-bar"></i>Laporan</div>
   <div class="tab" onclick="SW('armada',this)"><i class="ti ti-bus"></i>Armada</div>
   <div class="tab" onclick="SW('gaji',this)"><i class="ti ti-wallet"></i>Gaji</div>
-  <div class="tab" onclick="SW('kontrol',this)"><i class="ti ti-shield-check"></i>Kontrol</div>
+  <div class="tab" onclick="SW('kontrol',this)" style="position:relative"><div class="tab-wrap"><i class="ti ti-shield-check"></i>Kontrol</div><span id="notif-kontrol" class="notif-badge" style="display:none">0</span></div>
 </div>
 <!-- DASHBOARD -->
 <div id="pg-dashboard" class="pg active">
+  <div class="servis-alert" id="servis-alert-box" style="display:none"></div>
   <div class="banner">
     <div style="font-size:9px;opacity:.7">Total Pendapatan Bulan Ini</div>
     <div style="font-size:22px;font-weight:700;color:var(--ac);margin:3px 0 2px" id="db-tot">Rp 0</div>
@@ -258,6 +277,14 @@ select.fi{appearance:none}
     <div class="st"><div class="slbl">Total Fee Driver</div><div class="sv b" id="db-fee">Rp 0</div></div>
     <div class="st"><div class="slbl">Piutang JT</div><div class="sv r" id="db-piutang">0</div></div>
   </div>
+  <div id="servis-alert" style="display:none;background:#fdecea;border:.5px solid #F09595;border-radius:11px;padding:11px 13px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">
+      <i class="ti ti-tool" style="font-size:16px;color:var(--dn)"></i>
+      <div style="font-size:12px;font-weight:700;color:var(--dn)">Peringatan Servis Kendaraan!</div>
+    </div>
+    <div id="servis-alert-list" style="font-size:10px;color:#a02020;line-height:1.7"></div>
+    <button onclick="SWN('armada')" style="margin-top:7px;padding:5px 12px;border-radius:7px;background:var(--dn);color:#fff;border:none;font-size:10px;font-weight:600;cursor:pointer">Lihat Detail Servis</button>
+  </div>
   <div class="sec">Aksi Cepat</div>
   <div class="quick">
     <div class="qb" onclick="SWN('tambah')"><div class="qi" style="background:#eaf4fb"><i class="ti ti-plus" style="color:#2980b9"></i></div><div class="ql">Pesanan Baru</div></div>
@@ -270,7 +297,11 @@ select.fi{appearance:none}
 </div>
 <!-- PESANAN -->
 <div id="pg-pesanan" class="pg">
+  <div class="search-box">
+    <input type="text" id="search-pes" placeholder="&#128269; Cari nama / HP / ID pesanan..." oninput="renderP()">
+  </div>
   <div class="filter-box">
+    <div class="fg" style="margin-bottom:7px"><input class="fi" type="text" id="fil-cari" placeholder="&#128269; Cari nama / no HP / ID pesanan..." oninput="renderP()"></div>
     <div class="filter-grid">
       <div><div class="fl" style="margin-bottom:3px">Tanggal</div><input class="fi" type="date" id="fil-tgl" onchange="renderP()"></div>
       <div><div class="fl" style="margin-bottom:3px">Driver</div><select class="fi" id="fil-drv" onchange="renderP()"><option value="">Semua</option><option value="Zakaria">Zakaria</option><option value="Rahmat Hidayat">Rahmat Hidayat</option></select></div>
@@ -383,6 +414,12 @@ select.fi{appearance:none}
 </div>
 <!-- LAPORAN -->
 <div id="pg-laporan" class="pg">
+  <div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap">
+    <div class="ptab active" id="lv-umum" onclick="swLapView('umum',this)">Ringkasan</div>
+    <div class="ptab" id="lv-lr" onclick="swLapView('lr',this)">Laba Rugi</div>
+    <div class="ptab" id="lv-driver" onclick="swLapView('driver',this)">Per Driver</div>
+  </div>
+  <div id="lap-view-umum">
   <div class="period-tabs">
     <div class="ptab active" id="pt-bln" onclick="setPeriod('bulan',this)">Bulan Ini</div>
     <div class="ptab" id="pt-mg" onclick="setPeriod('minggu',this)">Minggu Ini</div>
@@ -438,7 +475,23 @@ select.fi{appearance:none}
   </div>
   <div class="sec">Riwayat Pengeluaran</div>
   <div id="biaya-list"></div>
-  <button class="btn-pr" style="margin-top:7px" onclick="exportData()">Backup & Export JSON</button>
+</div><!-- end lap-view-umum -->
+
+  <!-- LAP L/R -->
+  <div id="lap-view-lr" style="display:none">
+    <div style="display:flex;gap:7px;margin-bottom:9px;align-items:center">
+      <div class="fg" style="margin-bottom:0;flex:1"><div class="fl">Bulan</div><input class="fi" type="month" id="lr-bln" onchange="renderLR()"></div>
+      <button onclick="exportPDF()" style="padding:8px 13px;background:var(--dn);color:#fff;border:none;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;margin-top:14px"><i class="ti ti-file-type-pdf" style="margin-right:3px"></i>Export PDF</button>
+    </div>
+    <div id="lr-content"></div>
+  </div>
+
+  <!-- LAP PER DRIVER -->
+  <div id="lap-view-driver" style="display:none">
+    <div id="driver-content"></div>
+  </div>
+
+  <button class="btn-pr" style="margin-top:7px" onclick="exportData()">Backup &amp; Export JSON</button>
 </div>
 <!-- ARMADA -->
 <div id="pg-armada" class="pg">
@@ -645,14 +698,40 @@ async function addLog(tipe,aksi,det,color){var l={tipe,aksi,det,color:color||'#6
 function pinI(d){if(pinVal.length>=4)return;pinVal+=d;updDots();if(pinVal.length===4)setTimeout(checkPin,200);}
 function pinD(){pinVal=pinVal.slice(0,-1);updDots();}
 function updDots(){for(var i=0;i<4;i++)document.getElementById('d'+i).className='pin-dot'+(i<pinVal.length?' filled':'');}
-function checkPin(){if(pinVal===PIN){document.getElementById('pin-screen').classList.add('h');addLog('sistem','Login berhasil','','#27ae60');loadAll().then(function(){setupRT();});}else{document.getElementById('pin-err').textContent='PIN salah.';pinVal='';updDots();setTimeout(function(){document.getElementById('pin-err').textContent='';},2000);}}
-function logout(){document.getElementById('pin-screen').classList.remove('h');pinVal='';updDots();}
+function checkPin(){if(pinVal===PIN){document.getElementById('pin-screen').classList.add('h');addLog('sistem','Login berhasil','','#27ae60');loadAll().then(function(){setupRT();startSession();});}else{document.getElementById('pin-err').textContent='PIN salah.';pinVal='';updDots();setTimeout(function(){document.getElementById('pin-err').textContent='';},2000);}}
+var sessionTimer=null;
+function resetTimer(){
+  if(sessionTimer)clearTimeout(sessionTimer);
+  sessionTimer=setTimeout(function(){
+    logout();
+    setTimeout(function(){T('Session habis - silakan login kembali','err');},300);
+  },30*60*1000);
+}
+function logout(){
+  if(sessionTimer){clearTimeout(sessionTimer);sessionTimer=null;}
+  document.getElementById('pin-screen').classList.remove('h');
+  pinVal='';updDots();
+}
+['click','touchstart','keypress'].forEach(function(ev){document.addEventListener(ev,resetTimer,{passive:true});});
 function gantiPin(){var l=document.getElementById('pin-lama').value,b=document.getElementById('pin-baru').value,k=document.getElementById('pin-konfirm').value;if(l!==PIN){T('PIN lama salah','err');return;}if(b.length!==4||isNaN(b)){T('PIN harus 4 digit','err');return;}if(b!==k){T('Konfirmasi tidak cocok','err');return;}PIN=b;['pin-lama','pin-baru','pin-konfirm'].forEach(function(x){document.getElementById(x).value='';});addLog('sistem','PIN diubah','','#e8a020');T('PIN berhasil diubah!');}
 
 /* ── KONFLIK ── */
+function cekDriverSudahJalan(drv,tgl,jadwal){
+  /* Cek apakah driver sudah status Jalan di jam yang sama */
+  return DB.some(function(p){
+    return p.status==='Jalan'&&p.tipe==='travel'&&p.driver===drv&&p.tgl===tgl&&(p.jadwal||'')===(jadwal||'');
+  });
+}
+
 function cekKonflik(){
   var tgl=document.getElementById('f-tgl').value,drv=drvN(curN),box=document.getElementById('conflict-box'),btn=document.getElementById('btn-simpan');
   if(!tgl){box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';return;}
+  var jadwal=document.getElementById('f-jadwal')?document.getElementById('f-jadwal').value:'';
+  /* Blokir jika driver sudah Jalan di jam yang sama */
+  if(cekDriverSudahJalan(drv,tgl,jadwal)){
+    document.getElementById('conflict-msg').textContent=drv+' sedang dalam perjalanan ('+jadwal+') — tidak bisa tambah pesanan di jam yang sama.';
+    box.className='conflict-box show';btn.disabled=true;btn.style.opacity='0.5';return;
+  }
   /* Blokir hanya jika ada RENTAL driver yang sama di tanggal yang sama */
   var rentalBentrok=DB.filter(function(p){
     return p.status!=='Batal'&&p.tipe==='rental'&&p.driver===drv&&getTgl(p).indexOf(tgl)!==-1;
@@ -1082,7 +1161,19 @@ function cardHTML(p){
   return'<div class="pcard"><div class="pcard-head"><div class="pcard-ico '+icoC+'"><i class="ti '+(p.tipe==='rental'?'ti-car':'ti-bus')+'" style="color:'+icoClr+'"></i></div><div class="pcard-htxt"><div class="pcard-id">'+p.id+'</div><div class="pcard-rute">'+p.rute+'</div><span class="pcard-badge '+(p.tipe==='travel'?'badge-tv':'badge-rt')+'">'+(p.tipe==='travel'?'Travel':'Rental')+'</span>'+(p.mahasiswa?' <span class="pcard-badge badge-mhs">MHS</span>':'')+'</div><div class="pcard-right"><div class="pcard-price">'+fmtRp(p.total)+'</div><div class="pill '+sCls(p.status)+'">'+p.status+'</div></div></div><div class="pcard-rows">'+rows+'</div><div class="pcard-divider"></div><div class="pcard-chips"><span class="chip" onclick="cpTxt(\''+p.nama+'\')"><i class="ti ti-user"></i>'+p.nama+'</span>'+(p.hp?'<span class="chip" onclick="cpTxt(\''+p.hp+'\')"><i class="ti ti-phone"></i>'+p.hp+'</span>':'')+'</div>'+(eBtn||jBtn||sBtn?'<div class="pcard-actions">'+eBtn+jBtn+sBtn+'</div>':'')+'</div>';
 }
 function cpTxt(t){try{navigator.clipboard.writeText(t).then(function(){T('Tersalin: '+t);});}catch(e){T('Tersalin: '+t);}}
-function renderP(){var tgl=document.getElementById('fil-tgl').value,drv=document.getElementById('fil-drv').value;var data=DB.filter(function(p){if(fStat&&p.status!==fStat)return false;if(tgl&&p.tgl!==tgl&&!(p.tipe==='rental'&&getTglR(p).indexOf(tgl)!==-1))return false;if(drv&&p.driver!==drv)return false;return true;});var el=document.getElementById('pesanan-list');el.innerHTML=data.length?data.map(cardHTML).join(''):'<div class="kosong"><i class="ti ti-inbox"></i><div style="font-size:11px">Tidak ada pesanan.</div></div>';}
+function renderP(){
+  var tgl=document.getElementById('fil-tgl').value,drv=document.getElementById('fil-drv').value;
+  var q=getSearchQ();
+  var data=DB.filter(function(p){
+    if(fStat&&p.status!==fStat)return false;
+    if(tgl&&p.tgl!==tgl&&!(p.tipe==='rental'&&getTglR(p).indexOf(tgl)!==-1))return false;
+    if(drv&&p.driver!==drv)return false;
+    if(q){var hay=(p.nama+' '+(p.hp||'')+' '+p.id+' '+p.rute).toLowerCase();if(hay.indexOf(q)===-1)return false;}
+    return true;
+  });
+  var el=document.getElementById('pesanan-list');
+  el.innerHTML=data.length?data.map(cardHTML).join(''):'<div class="kosong"><i class="ti ti-inbox"></i><div style="font-size:11px">'+(q?'Tidak ada hasil pencarian.':'Tidak ada pesanan.')+'</div></div>';
+}
 
 /* ── EDIT PESANAN ── */
 function openEdit(id){
@@ -1141,10 +1232,19 @@ function renderDash(){
 }
 
 /* ── NAV ── */
-function SW(name,el){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('pg-'+name).classList.add('active');el.classList.add('active');if(name==='pesanan')renderP();if(name==='dashboard')renderDash();if(name==='setoran')renderRekon();if(name==='laporan')renderLaporan();if(name==='armada')renderServis();if(name==='gaji')renderGaji();if(name==='kontrol')renderKontrol();if(name==='tambah'){if(!document.getElementById('f-tgl').value)document.getElementById('f-tgl').value=today;selS=[];redrawFS();cekKonflik();hitF();}}
+function SW(name,el){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('pg-'+name).classList.add('active');el.classList.add('active');
+  if(name==='pesanan')renderP();
+  if(name==='dashboard'){renderDash();renderServisAlert();}
+  if(name==='setoran')renderRekon();
+  if(name==='laporan'){renderLaporan();if(!document.getElementById('lr-bln').value)document.getElementById('lr-bln').value=today.slice(0,7);}
+  if(name==='armada')renderServis();
+  if(name==='gaji')renderGaji();
+  if(name==='kontrol')renderKontrol();
+  if(name==='tambah'){if(!document.getElementById('f-tgl').value)document.getElementById('f-tgl').value=today;selS=[];redrawFS();cekKonflik();hitF();}
+}
 function SWN(name){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('pg-'+name).classList.add('active');document.querySelectorAll('.tab').forEach(function(t){if(t.getAttribute('onclick')&&t.getAttribute('onclick').indexOf("'"+name+"'")!==-1)t.classList.add('active');});if(name==='pesanan')renderP();if(name==='dashboard')renderDash();if(name==='setoran')renderRekon();if(name==='laporan')renderLaporan();if(name==='armada')renderServis();if(name==='gaji')renderGaji();if(name==='kontrol')renderKontrol();if(name==='tambah'){if(!document.getElementById('f-tgl').value)document.getElementById('f-tgl').value=today;selS=[];redrawFS();cekKonflik();hitF();}}
 function swType(t){var isT=t==='travel';document.getElementById('f-travel').style.display=isT?'block':'none';document.getElementById('f-rental').style.display=isT?'none':'block';document.getElementById('tb-tv').className='tbtn'+(isT?' active':'');document.getElementById('tb-rt').className='tbtn'+(!isT?' active':'');}
-function renderAll(){renderDash();renderP();renderLaporan();renderGaji();renderRekon();}
+function renderAll(){renderDash();renderP();renderLaporan();renderGaji();renderRekon();updateNotifBadge();renderServisAlert();}
 
 document.getElementById('mov').addEventListener('click',function(e){if(e.target===this)closeM();});
 document.getElementById('rek-bln').value=today.slice(0,7);
@@ -1152,6 +1252,224 @@ document.getElementById('b-tgl').value=today;
 document.getElementById('sim-tgl').value=today;
 document.getElementById('f-tgl').value=today;
 onRC();redrawFS();cekKonflik();pilihArm(1);
+
+/* ══════════════════════════════════════════
+   SESSION TIMEOUT
+══════════════════════════════════════════ */
+var sessionTimer=null,sessionLeft=1800;
+function startSession(){
+  sessionLeft=1800;
+  document.getElementById('session-bar').style.display='flex';
+  if(sessionTimer)clearInterval(sessionTimer);
+  sessionTimer=setInterval(function(){
+    sessionLeft--;
+    var m=Math.floor(sessionLeft/60),s=sessionLeft%60;
+    var el=document.getElementById('session-timer');
+    if(el)el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+    if(sessionLeft<=300)document.getElementById('session-bar').style.background='var(--dn)';
+    if(sessionLeft<=0){clearInterval(sessionTimer);logout();}
+  },1000);
+}
+function resetSession(){
+  sessionLeft=1800;
+  document.getElementById('session-bar').style.background='var(--warn)';
+  T('Sesi diperpanjang 30 menit');
+}
+['click','keydown','touchstart'].forEach(function(ev){
+  document.addEventListener(ev,function(){if(sessionLeft<1800&&sessionLeft>0)sessionLeft=Math.min(1800,sessionLeft+30);},true);
+});
+
+/* ══════════════════════════════════════════
+   NOTIF BADGE
+══════════════════════════════════════════ */
+function updateNotifBadge(){
+  var menunggu=SETOR.filter(function(s){return s.status==='Menunggu';}).length;
+  var ns=document.getElementById('notif-setor');
+  var nk=document.getElementById('notif-kontrol');
+  if(ns){ns.style.display=menunggu>0?'flex':'none';ns.textContent=menunggu;}
+  if(nk){nk.style.display=menunggu>0?'flex':'none';nk.textContent=menunggu;}
+}
+
+/* ══════════════════════════════════════════
+   SEARCH PESANAN
+══════════════════════════════════════════ */
+function getSearchQ(){var el=document.getElementById('search-pes');return el?el.value.trim().toLowerCase():'';}
+
+/* ══════════════════════════════════════════
+   BLOKIR TRAVEL JIKA DRIVER SUDAH JALAN
+   (jam sama, hari sama, driver sama)
+══════════════════════════════════════════ */
+function cekDriverSudahJalan(drv,tgl,jadwal){
+  return DB.some(function(p){
+    return p.status==='Jalan'&&p.driver===drv&&p.tgl===tgl&&(p.jadwal||'')===(jadwal||'')&&p.tipe==='travel';
+  });
+}
+
+/* ══════════════════════════════════════════
+   REMINDER SERVIS OTOMATIS
+══════════════════════════════════════════ */
+function renderServisAlert(){
+  var terlambat=[],segera=[];
+  [1,2].forEach(function(arm){
+    var km=SRV_ST[arm].kmSaved||0;
+    SRV_MASTER.forEach(function(m){
+      var nx=SRV_ST[arm].nextKm[m.id];
+      if(nx===null)return;
+      var sisa=nx-km;
+      var armNama=arm===1?'Hiace 8 (Zakaria)':'Hiace 9 (Rahmat)';
+      if(sisa<=0)terlambat.push({nama:m.nama,arm:armNama,sisa:sisa});
+      else if(sisa<=m.warnAt)segera.push({nama:m.nama,arm:armNama,sisa:sisa});
+    });
+  });
+  var el=document.getElementById('servis-alert-box');
+  if(!el)return;
+  if(!terlambat.length&&!segera.length){el.style.display='none';return;}
+  el.style.display='block';
+  el.innerHTML='<div style="font-size:11px;font-weight:700;margin-bottom:6px"><i class="ti ti-alert-triangle" style="margin-right:5px"></i>Peringatan Jadwal Servis</div>'+
+    terlambat.map(function(x){return'<div style="font-size:10px;padding:3px 0;border-bottom:.5px solid rgba(255,255,255,.15)"><i class="ti ti-circle-x" style="margin-right:4px;color:#ffaaaa"></i><strong>TERLAMBAT:</strong> '+x.nama+' — '+x.arm+' (lewat '+Math.abs(x.sisa).toLocaleString()+' km)</div>';}).join('')+
+    segera.map(function(x){return'<div style="font-size:10px;padding:3px 0;border-bottom:.5px solid rgba(255,255,255,.15)"><i class="ti ti-alert-circle" style="margin-right:4px;color:#ffe082"></i><strong>Segera:</strong> '+x.nama+' — '+x.arm+' (sisa '+x.sisa.toLocaleString()+' km)</div>';}).join('')+
+    '<button onclick="SWN(\'armada\')" style="margin-top:7px;background:rgba(255,255,255,.2);border:none;border-radius:7px;color:#fff;padding:5px 12px;font-size:10px;font-weight:600;cursor:pointer">Lihat Detail Servis</button>';
+}
+
+/* ══════════════════════════════════════════
+   SWITCH VIEW LAPORAN
+══════════════════════════════════════════ */
+function swLapView(v,el){
+  ['umum','lr','driver'].forEach(function(x){
+    var d=document.getElementById('lap-view-'+x);
+    if(d)d.style.display=x===v?'block':'none';
+  });
+  document.querySelectorAll('#pg-laporan .ptab').forEach(function(b){b.classList.remove('active');});
+  if(el)el.classList.add('active');
+  if(v==='lr'){
+    if(!document.getElementById('lr-bln').value)document.getElementById('lr-bln').value=today.slice(0,7);
+    renderLR();
+  }
+  if(v==='driver')renderDriverReport();
+}
+
+/* ══════════════════════════════════════════
+   LAPORAN LABA RUGI BULANAN
+══════════════════════════════════════════ */
+function renderLR(){
+  var bln=document.getElementById('lr-bln')?document.getElementById('lr-bln').value||today.slice(0,7):today.slice(0,7);
+  var el=document.getElementById('lr-content');if(!el)return;
+  var dbBln=DB.filter(function(p){return p.status!=='Batal'&&p.tgl&&p.tgl.startsWith(bln);});
+  var byBln=BIAYA.filter(function(b){return b.tgl&&b.tgl.startsWith(bln);});
+  /* PENDAPATAN */
+  var tvTotal=dbBln.filter(function(p){return p.tipe==='travel';}).reduce(function(s,p){return s+p.total;},0);
+  var rtTotal=dbBln.filter(function(p){return p.tipe==='rental';}).reduce(function(s,p){return s+p.total;},0);
+  var disMhs=dbBln.filter(function(p){return p.mahasiswa;}).reduce(function(s,p){return s+(p.diskon||0);},0);
+  var pendBruto=tvTotal+rtTotal;
+  var pendNeto=pendBruto-disMhs;
+  /* PENGELUARAN PER KATEGORI */
+  var katMap={};
+  byBln.forEach(function(b){
+    var k=b.kategori||'Lain-lain';
+    if(!katMap[k])katMap[k]=0;
+    katMap[k]+=b.jumlah;
+  });
+  var totalBiaya=byBln.reduce(function(s,b){return s+b.jumlah;},0);
+  var laba=pendNeto-totalBiaya;
+  /* SETORAN */
+  var setorOk=SETOR.filter(function(s){return s.status==='Dikonfirmasi'&&s.tgl&&s.tgl.startsWith(bln);}).reduce(function(s,x){return s+(x.jumlah||0);},0);
+  var setorPending=SETOR.filter(function(s){return s.status==='Menunggu'&&s.tgl&&s.tgl.startsWith(bln);}).reduce(function(s,x){return s+(x.jumlah||0);},0);
+  /* Nama bulan */
+  var bulanNama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  var blnParts=bln.split('-');
+  var judulBln=bulanNama[parseInt(blnParts[1])-1]+' '+blnParts[0];
+  el.innerHTML=
+    '<div style="background:var(--pr);border-radius:11px;padding:13px;margin-bottom:9px;color:#fff">'+
+      '<div style="font-size:9px;opacity:.7">Laporan Laba Rugi</div>'+
+      '<div style="font-size:16px;font-weight:700;margin:2px 0">'+judulBln+'</div>'+
+      '<div style="font-size:22px;font-weight:700;color:'+(laba>=0?'#2ecc71':'#e74c3c')+';margin-top:4px">'+(laba>=0?'+':'')+fmtRp(laba)+'</div>'+
+      '<div style="font-size:9px;opacity:.7;margin-top:2px">'+(laba>=0?'LABA BERSIH':'RUGI BERSIH')+'</div>'+
+    '</div>'+
+    '<div style="overflow-x:auto;border-radius:11px;border:.5px solid var(--bd);margin-bottom:9px">'+
+    '<table class="laba-rugi-table">'+
+      '<thead><tr><th>Keterangan</th><th style="text-align:right">Jumlah</th></tr></thead>'+
+      '<tbody>'+
+        '<tr><td colspan="2" style="background:#eaf4fb;font-weight:700;color:#1a6fa0;font-size:10px">PENDAPATAN</td></tr>'+
+        '<tr><td>Pendapatan Travel</td><td style="text-align:right">'+fmtRp(tvTotal)+'</td></tr>'+
+        '<tr><td>Pendapatan Rental</td><td style="text-align:right">'+fmtRp(rtTotal)+'</td></tr>'+
+        (disMhs>0?'<tr><td style="color:#6b21a8">Diskon Mahasiswa</td><td style="text-align:right;color:#6b21a8">−'+fmtRp(disMhs)+'</td></tr>':'')+
+        '<tr class="total-row"><td>Total Pendapatan Bersih</td><td style="text-align:right;color:var(--sc)">'+fmtRp(pendNeto)+'</td></tr>'+
+        '<tr><td colspan="2" style="background:#fdecea;font-weight:700;color:#a02020;font-size:10px">PENGELUARAN</td></tr>'+
+        Object.keys(katMap).map(function(k){return'<tr><td>'+k+'</td><td style="text-align:right;color:var(--dn)">'+fmtRp(katMap[k])+'</td></tr>';}).join('')+
+        '<tr class="total-row"><td>Total Pengeluaran</td><td style="text-align:right;color:var(--dn)">'+fmtRp(totalBiaya)+'</td></tr>'+
+        '<tr class="'+(laba>=0?'laba-row':'rugi-row')+'"><td>'+(laba>=0?'LABA BERSIH':'RUGI BERSIH')+'</td><td style="text-align:right">'+(laba>=0?'+':'')+fmtRp(laba)+'</td></tr>'+
+        '<tr><td colspan="2" style="background:#f4f6fa;font-weight:700;color:var(--mt);font-size:10px">KAS & SETORAN</td></tr>'+
+        '<tr><td>Setoran Dikonfirmasi</td><td style="text-align:right;color:var(--sc)">'+fmtRp(setorOk)+'</td></tr>'+
+        '<tr><td>Setoran Menunggu</td><td style="text-align:right;color:var(--warn)">'+fmtRp(setorPending)+'</td></tr>'+
+      '</tbody>'+
+    '</table></div>'+
+    '<div style="background:#eafaf1;border:.5px solid #a9dfbf;border-radius:9px;padding:9px 12px;font-size:10px;color:#1e7e44">'+
+      '<strong>Margin:</strong> '+(pendNeto>0?Math.round(laba/pendNeto*100):0)+'% · '+
+      '<strong>Pesanan:</strong> '+dbBln.length+' total ('+dbBln.filter(function(p){return p.tipe==='travel';}).length+' travel, '+dbBln.filter(function(p){return p.tipe==='rental';}).length+' rental)'+
+    '</div>';
+}
+
+/* ══════════════════════════════════════════
+   LAPORAN PER DRIVER
+══════════════════════════════════════════ */
+function renderDriverReport(){
+  var el=document.getElementById('driver-content');if(!el)return;
+  var drivers=['Zakaria','Rahmat Hidayat'];
+  el.innerHTML=drivers.map(function(drv){
+    var drvP=DB.filter(function(p){return p.driver===drv&&p.status!=='Batal';});
+    var tvP=drvP.filter(function(p){return p.tipe==='travel';});
+    var rtP=drvP.filter(function(p){return p.tipe==='rental';});
+    var tvTot=tvP.reduce(function(s,p){return s+p.total;},0);
+    var rtTot=rtP.reduce(function(s,p){return s+p.total;},0);
+    var fee=getFee(drv);
+    var setorOk=SETOR.filter(function(s){return s.status==='Dikonfirmasi'&&s.driver===drv;}).reduce(function(s,x){return s+(x.jumlah_kotor||x.jumlah||0);},0);
+    var av=drv==='Zakaria'?'av-b':'av-g',ini=drv==='Zakaria'?'ZK':'RH';
+    return'<div class="card" style="margin-bottom:9px">'+
+      '<div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">'+
+        '<div class="drv-av '+av+'">'+ini+'</div>'+
+        '<div><div style="font-size:13px;font-weight:700">'+drv+'</div>'+
+        '<div style="font-size:9px;color:var(--mt)">'+(drv==='Zakaria'?'Hiace 8 · AB 7845 HH':'Hiace 9 · AB 7167 BE')+'</div></div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">'+
+        '<div class="st"><div class="slbl">Total Pesanan</div><div class="sv b">'+drvP.length+'</div></div>'+
+        '<div class="st"><div class="slbl">Pendapatan</div><div class="sv a">'+fmtRp(tvTot+rtTot)+'</div></div>'+
+        '<div class="st"><div class="slbl">Fee Driver</div><div class="sv g">'+fmtRp(fee)+'</div></div>'+
+        '<div class="st"><div class="slbl">Setoran OK</div><div class="sv g">'+fmtRp(setorOk)+'</div></div>'+
+      '</div>'+
+      '<div style="font-size:10px;color:var(--mt)">Travel: '+tvP.length+' trip ('+fmtRp(tvTot)+') · Rental: '+rtP.length+' kali ('+fmtRp(rtTot)+')</div>'+
+    '</div>';
+  }).join('');
+}
+
+/* ══════════════════════════════════════════
+   EXPORT PDF LAPORAN L/R
+══════════════════════════════════════════ */
+function exportPDF(){
+  var bln=document.getElementById('lr-bln')?document.getElementById('lr-bln').value||today.slice(0,7):today.slice(0,7);
+  var el=document.getElementById('lr-content');
+  if(!el||!el.innerHTML){T('Buat laporan dulu','err');return;}
+  var win=window.open('','_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan HAMCO TRANS '+bln+'</title>'+
+    '<style>body{font-family:Arial,sans-serif;padding:20px;color:#1a2233;max-width:700px;margin:0 auto}'+
+    'h1{color:#1a3a5c;font-size:18px;margin-bottom:4px}'+
+    'h2{color:#6b7a99;font-size:12px;font-weight:400;margin-bottom:20px}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:20px}'+
+    'th{background:#1a3a5c;color:#fff;padding:8px 10px;text-align:left;font-size:11px}'+
+    'td{padding:7px 10px;border-bottom:1px solid #eee;font-size:11px}'+
+    'tr.total-row td{font-weight:700;background:#f4f6fa}'+
+    'tr.laba-row td{font-weight:700;background:#27ae60;color:#fff}'+
+    'tr.rugi-row td{font-weight:700;background:#e74c3c;color:#fff}'+
+    '.footer{margin-top:30px;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:10px}'+
+    '@media print{button{display:none}}</style></head><body>'+
+    '<h1>HAMCO TRANS — Laporan Laba Rugi</h1>'+
+    '<h2>Dicetak: '+new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})+'</h2>'+
+    el.innerHTML+
+    '<div class="footer">Dokumen ini digenerate otomatis oleh Sistem Manajemen HAMCO TRANS</div>'+
+    '<br><button onclick="window.print()" style="padding:8px 16px;background:#1a3a5c;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:12px">Cetak / Save PDF</button>'+
+    '</body></html>');
+  win.document.close();
+}
+
 </script>
 </body>
 </html>
