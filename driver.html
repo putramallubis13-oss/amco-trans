@@ -433,26 +433,39 @@ function T(m,t){var e=document.getElementById('tst');e.textContent=m;e.style.bac
 async function loadAll(){
   setSS('syncing','Memuat...');
   try{
-    var[p,s,f,gc,gr]=await Promise.all([
-      sb.from('pesanan').select('*').eq('driver',curDrv.nama).order('tgl',{ascending:false}),
-      sb.from('setoran').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false}),
-      sb.from('fee_log').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false}),
-      sb.from('gaji_comp').select('*').eq('driver',curDrv.nama),
-      sb.from('gaji_rw').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false})
-    ]);
+    setSS('syncing','Load pesanan...');
+    var p=await sb.from('pesanan').select('*').eq('driver',curDrv.nama).order('tgl',{ascending:false});
+    if(p.error)throw new Error('pesanan: '+p.error.message);
+    
+    setSS('syncing','Load setoran...');
+    var s=await sb.from('setoran').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false});
+    if(s.error)throw new Error('setoran: '+s.error.message);
+    
+    setSS('syncing','Load fee...');
+    var f=await sb.from('fee_log').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false});
+    if(f.error)throw new Error('fee_log: '+f.error.message);
+    
+    setSS('syncing','Load gaji...');
+    var gc=await sb.from('gaji_comp').select('*').eq('driver',curDrv.nama);
+    if(gc.error)throw new Error('gaji_comp: '+gc.error.message);
+    
+    var gr=await sb.from('gaji_rw').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false});
+    if(gr.error)throw new Error('gaji_rw: '+gr.error.message);
+
     DB=(p.data||[]).map(r2p);
     SETOR=s.data||[];FEE_LOG=f.data||[];
     if(gc.data&&gc.data.length)GAJI_COMP=gc.data[0];
     GAJI_RW=gr.data||[];
-    /* Load kasbon terpisah - aman jika tabel belum ada */
+    
     try{
       var kb=await sb.from('kasbon').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false});
       KASBON=kb.data||[];
       if(KASBON.length){var ki=KASBON.map(function(x){return parseInt(x.id.replace('KB-',''))||0;});KCTR=Math.max.apply(null,ki)+1;}
     }catch(ke){KASBON=[];}
+    
     if(SETOR.length){var si=SETOR.map(function(x){return parseInt(x.id.replace('ST-',''))||0;});SCTR=Math.max.apply(null,si)+1;}
     setSS('ok','Online');renderAll();
-  }catch(e){setSS('error','Offline: '+e.message);console.error('loadAll error:',e);T('Error: '+e.message,'err');}
+  }catch(e){setSS('error','Offline');T(e.message,'err');console.error(e);}
 }
 function r2p(r){return{id:r.id,tipe:r.tipe,nama:r.nama,hp:r.hp,rute:r.rute,driver:r.driver,armStr:r.arm_str,tgl:r.tgl,jadwal:r.jadwal,seats:r.seats||[],pnp:r.pnp||0,bandara:r.bandara,mahasiswa:r.mahasiswa,total:r.total||0,mulai:r.mulai,selesai:r.selesai,hari:r.hari||0,sisa:r.sisa||0,dp:r.dp||0,catatan:r.catatan,status:r.status,mahasiswa_seats:r.mahasiswa_seats||[],luar_sumbar:r.luar_sumbar||false};}
 function setupRT(){sb.channel('drv-'+curDrv.nama).on('postgres_changes',{event:'*',schema:'public',table:'pesanan',filter:'driver=eq.'+curDrv.nama},function(){loadAll();}).on('postgres_changes',{event:'*',schema:'public',table:'setoran',filter:'driver=eq.'+curDrv.nama},function(){loadAll();}).on('postgres_changes',{event:'*',schema:'public',table:'fee_log',filter:'driver=eq.'+curDrv.nama},function(){loadAll();}).subscribe();}
@@ -481,6 +494,9 @@ async function toggleMhs(pesananId,seat){
 /* ── RENDER JADWAL ── */
 function renderJadwal(){
   var todayP=DB.filter(function(p){return p.tgl===today&&p.status!=='Batal';});
+  /* DEBUG - tampilkan info data */
+  console.log('today:',today,'DB total:',DB.length,'todayP:',todayP.length);
+  if(DB.length>0)console.log('sample tgl:',DB[0].tgl,'driver:',DB[0].driver);
   var mendatangP=DB.filter(function(p){return p.tgl>today&&p.status!=='Batal';});
 
   /* Kelompokkan travel hari ini per tujuan+jadwal */
@@ -503,7 +519,8 @@ function renderJadwal(){
 
   var el=document.getElementById('jadwal-list');
   if(!travelGroups.length&&!rentalToday.length){
-    el.innerHTML='<div class="kosong"><i class="ti ti-calendar-off"></i><div style="font-size:11px">Tidak ada jadwal hari ini.</div></div>';
+    var dbInfo=DB.length>0?'(DB: '+DB.length+' pesanan, tgl sample: '+DB[0].tgl+')':'(DB kosong)';
+    el.innerHTML='<div class="kosong"><i class="ti ti-calendar-off"></i><div style="font-size:11px">Tidak ada jadwal hari ini.</div><div style="font-size:9px;color:var(--mt);margin-top:5px">Hari ini: '+today+'<br>'+dbInfo+'</div></div>';
   }else{
     /* Sort: pagi dulu, sore belakangan */
     travelGroups.sort(function(a,b){return (a.jadwal||'').localeCompare(b.jadwal||'');});
