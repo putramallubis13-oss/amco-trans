@@ -433,20 +433,23 @@ function T(m,t){var e=document.getElementById('tst');e.textContent=m;e.style.bac
 async function loadAll(){
   setSS('syncing','Memuat...');
   try{
-    var[p,s,f,gc,gr,kb]=await Promise.all([
+    var[p,s,f,gc,gr]=await Promise.all([
       sb.from('pesanan').select('*').eq('driver',curDrv.nama).order('tgl',{ascending:false}),
       sb.from('setoran').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false}),
       sb.from('fee_log').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false}),
       sb.from('gaji_comp').select('*').eq('driver',curDrv.nama),
-      sb.from('gaji_rw').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false}),
-      sb.from('kasbon').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false})
+      sb.from('gaji_rw').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false})
     ]);
     DB=(p.data||[]).map(r2p);
     SETOR=s.data||[];FEE_LOG=f.data||[];
     if(gc.data&&gc.data.length)GAJI_COMP=gc.data[0];
     GAJI_RW=gr.data||[];
-    KASBON=kb.data||[];
-    if(KASBON.length){var ki=KASBON.map(function(x){return parseInt(x.id.replace('KB-',''))||0;});KCTR=Math.max.apply(null,ki)+1;}
+    /* Load kasbon terpisah - aman jika tabel belum ada */
+    try{
+      var kb=await sb.from('kasbon').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false});
+      KASBON=kb.data||[];
+      if(KASBON.length){var ki=KASBON.map(function(x){return parseInt(x.id.replace('KB-',''))||0;});KCTR=Math.max.apply(null,ki)+1;}
+    }catch(ke){KASBON=[];}
     if(SETOR.length){var si=SETOR.map(function(x){return parseInt(x.id.replace('ST-',''))||0;});SCTR=Math.max.apply(null,si)+1;}
     setSS('ok','Online');renderAll();
   }catch(e){setSS('error','Offline');console.error(e);}
