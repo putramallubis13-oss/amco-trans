@@ -716,15 +716,18 @@ async function loadAll(){
       sb.from('gaji_comp').select('*'),
       sb.from('gaji_rw').select('*').order('created_at',{ascending:false}),
       sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(50),
-      sb.from('servis_state').select('*'),
-      sb.from('kasbon').select('*').order('created_at',{ascending:false})
+      sb.from('servis_state').select('*')
     ]);
     DB=(p.data||[]).map(r2p);SETOR=s.data||[];BIAYA=b.data||[];FEE_LOG=f.data||[];
     if(gc.data)gc.data.forEach(function(r){GAJI_COMP[r.driver]={pokok:r.pokok,potongan:r.potongan,dibayar:r.dibayar};});
     GAJI_RW=gr.data||[];
     LOGS=(lg.data||[]).map(function(l){return{tipe:l.tipe,aksi:l.aksi,det:l.detail,color:l.color,waktu:l.waktu};});
-    KASBON_ALL=kb.data||[];
-    if(KASBON_ALL.length){var ki=KASBON_ALL.map(function(x){return parseInt(x.id.replace('KB-',''))||0;});KCTR=Math.max.apply(null,ki)+1;}
+    /* Load kasbon terpisah - aman jika tabel belum ada */
+    try{
+      var kb=await sb.from('kasbon').select('*').order('created_at',{ascending:false});
+      KASBON_ALL=kb.data||[];
+      if(KASBON_ALL.length){var ki=KASBON_ALL.map(function(x){return parseInt(x.id.replace('KB-',''))||0;});KCTR=Math.max.apply(null,ki)+1;}
+    }catch(ke){KASBON_ALL=[];}
     if(srv.data)srv.data.forEach(function(r){
       SRV_ST[r.armada].kmSaved=r.km_saved||0;SRV_ST[r.armada].kmTime=r.km_time||'';
       SRV_ST[r.armada].riwayat=r.riwayat||{};SRV_ST[r.armada].nextKm=r.next_km||{};
