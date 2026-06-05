@@ -498,21 +498,23 @@ function renderJadwal(){
   console.log('today:',today,'DB total:',DB.length,'todayP:',todayP.length);
   if(DB.length>0)console.log('sample tgl:',DB[0].tgl,'driver:',DB[0].driver);
   var mendatangP=DB.filter(function(p){return p.tgl>today&&p.status!=='Batal'&&p.tipe==='travel';});
-  /* Rental mendatang: mulai > today */
-  var mendatangRental=DB.filter(function(p){
-    if(p.tipe!=='rental'||p.status==='Batal')return false;
-    return (p.mulai||p.tgl)>today;
-  }).slice(0,3);
 
   /* Kelompokkan travel hari ini per tujuan+jadwal */
   var travelGroups=groupTravel(todayP.filter(function(p){return p.tipe==='travel';}));
   /* Rental hari ini: mulai <= today <= selesai */
   var rentalToday=DB.filter(function(p){
     if(p.tipe!=='rental'||p.status==='Batal')return false;
-    var mulai=p.mulai||p.tgl;
-    var selesai=p.selesai||p.tgl;
+    var mulai=(p.mulai||p.tgl||'').trim().slice(0,10);
+    var selesai=(p.selesai||p.tgl||'').trim().slice(0,10);
     return mulai<=today&&today<=selesai;
   });
+
+  /* Rental mendatang: mulai > today (belum mulai) */
+  var mendatangRental=DB.filter(function(p){
+    if(p.tipe!=='rental'||p.status==='Batal')return false;
+    var mulai=(p.mulai||p.tgl||'').trim().slice(0,10);
+    return mulai>today;
+  }).slice(0,3);
 
   var aktif=todayP.filter(function(p){return p.status==='Menunggu'||p.status==='Jalan';}).length;
   var selesai=todayP.filter(function(p){return p.status==='Selesai';}).length;
