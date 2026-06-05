@@ -1027,11 +1027,11 @@ async function simpanKasbon(){
   if(!ket){T('Masukkan keterangan','err');return;}
   var saldo=getSaldoKasbon(drv);
   if(jml>saldo){T('Kasbon melebihi saldo ('+fmtRp(saldo)+')','err');return;}
-  setSyncStatus('syncing','Menyimpan...');
+  setSS('syncing','Menyimpan...');
   var id='KB-'+String(KCTR++).padStart(3,'0');
   var k={id,driver:drv,jumlah:jml,keterangan:ket,tgl:today,status:'Dicairkan'};
   var{error}=await sb.from('kasbon').insert(k);
-  if(error){T('Gagal: '+error.message,'err');return;}
+  if(error){T('Gagal: '+error.message,'err');setSS('error','Gagal');return;}
   KASBON_ALL.unshift(k);
   /* Catat sebagai pengeluaran otomatis */
   var b={id:'BY-'+String(BCTR++).padStart(3,'0'),kategori:'Gaji Driver',tgl:today,nama:'Kasbon '+drv+' - '+ket,jumlah:jml};
@@ -1040,8 +1040,8 @@ async function simpanKasbon(){
   document.getElementById('kb-jml').value='';
   document.getElementById('kb-ket').value='';
   document.getElementById('kb-preview').style.display='none';
-  setSyncStatus('ok','Tersimpan');
-  T('Kasbon '+drv+' Rp '+fmtRp(jml)+' berhasil dipotong!');
+  setSS('ok','Tersimpan');
+  T('Kasbon '+drv+' '+fmtRp(jml)+' berhasil dipotong!');
   renderGaji();renderLaporan();
 }
 
