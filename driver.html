@@ -628,9 +628,13 @@ function rentalCard(p,showActions){
   var stCls=p.status==='Jalan'?'tp-jalan':p.status==='Selesai'?'tp-selesai':'tp-menunggu';
   var actionBtns='';
   if(showActions){
-    if(p.status==='Menunggu')actionBtns='<div class="trip-btn-row"><button class="trip-btn tbtn-mulai" onclick="setStatusSingle(\''+p.id+'\',\'Jalan\')"><i class="ti ti-player-play"></i> Mulai Rental</button></div>';
-    else if(p.status==='Jalan')actionBtns='<div class="trip-btn-row"><button class="trip-btn tbtn-jalan" onclick="setStatusSingle(\''+p.id+'\',\'Selesai\')"><i class="ti ti-player-stop"></i> Selesai Rental</button></div>';
-    else if(p.status==='Selesai')actionBtns='<div class="trip-btn-row"><div class="trip-btn tbtn-selesai" style="cursor:default"><i class="ti ti-check"></i> Rental Selesai</div></div>';
+    if(p.status==='Menunggu'){
+      actionBtns='<div class="trip-btn-row"><button class="trip-btn tbtn-mulai" data-id="'+p.id+'" data-ns="Jalan" onclick="setStatusSingle(this.dataset.id,this.dataset.ns)"><i class="ti ti-player-play"></i> Mulai Rental</button></div>';
+    }else if(p.status==='Jalan'){
+      actionBtns='<div class="trip-btn-row"><button class="trip-btn tbtn-jalan" data-id="'+p.id+'" data-ns="Selesai" onclick="setStatusSingle(this.dataset.id,this.dataset.ns)"><i class="ti ti-player-stop"></i> Selesai Rental</button></div>';
+    }else if(p.status==='Selesai'){
+      actionBtns='<div class="trip-btn-row"><div class="trip-btn tbtn-selesai" style="cursor:default"><i class="ti ti-check"></i> Rental Selesai</div></div>';
+    }
   }
   return'<div class="rental-card">'+
     '<div class="rental-header">'+
