@@ -352,7 +352,14 @@ var KCTR=1;
 var tvBiayaRows=[],rtBiayaRows=[],biayaCtr=0;
 var selTvPes=[],selRtPes=null,fRw='',SCTR=1;
 var jumlahMhs=0;
-var today=new Date().toISOString().slice(0,10);
+function getToday(){
+  var d=new Date();
+  var y=d.getFullYear();
+  var m=String(d.getMonth()+1).padStart(2,'0');
+  var dd=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+dd;
+}
+var today=getToday();
 var curSetorType='travel';
 var FEE_TV=5000,FEE_RT=100000,FEE_RT_LUAR=200000;
 var DIS_MHS=10000;
@@ -415,7 +422,7 @@ function checkPin(){
     document.getElementById('drv-armada').textContent=curDrv.armada;
     document.getElementById('drv-banner').className='banner '+curDrv.warna;
     document.getElementById('gaji-banner').className='banner '+curDrv.warna;
-    document.getElementById('tgl-today').textContent=today;
+    today=getToday();document.getElementById('tgl-today').textContent=today;
     /* tanggal setoran otomatis pakai today saat kirim */
     loadAll().then(function(){setupRT();loadPesananTravel();renderRentalList();});
   }else{
@@ -493,10 +500,8 @@ async function toggleMhs(pesananId,seat){
 
 /* ── RENDER JADWAL ── */
 function renderJadwal(){
+  today=getToday(); /* selalu update tanggal terkini */
   var todayP=DB.filter(function(p){return p.tgl===today&&p.status!=='Batal';});
-  /* DEBUG - tampilkan info data */
-  console.log('today:',today,'DB total:',DB.length,'todayP:',todayP.length);
-  if(DB.length>0)console.log('sample tgl:',DB[0].tgl,'driver:',DB[0].driver);
   var mendatangP=DB.filter(function(p){return p.tgl>today&&p.status!=='Batal'&&p.tipe==='travel';});
 
   /* Kelompokkan travel hari ini per tujuan+jadwal */
@@ -763,7 +768,7 @@ async function kirimSetorTravel(){
   if(!selTvPes.length){T('Pilih minimal 1 pesanan','err');return;}
   var sesPes=DB.filter(function(p){return selTvPes.indexOf(p.id)!==-1;});
   /* Tanggal otomatis = tanggal hari ini */
-  var tgl=today;
+  var tgl=getToday();
   var totPend=sesPes.reduce(function(s,p){return s+p.total;},0);
   var totMhsDis=jumlahMhs*DIS_MHS;
   var biayaV=tvBiayaRows.filter(function(b){return b.jumlah>0&&b.nama;});
@@ -846,7 +851,7 @@ function hitSetorRental(){
   }else prev.style.display='none';
 }
 async function kirimSetorRental(){
-  var tgl=today,jml=parseInt(document.getElementById('srt-jml').value)||0,ket=document.getElementById('srt-ket').value.trim();
+  var tgl=getToday(),jml=parseInt(document.getElementById('srt-jml').value)||0,ket=document.getElementById('srt-ket').value.trim();
   if(!selRtPes||!jml){T('Masukkan jumlah setoran','err');return;}
   var p=DB.find(function(x){return x.id===selRtPes;});
   var biayaV=rtBiayaRows.filter(function(b){return b.jumlah>0&&b.nama;});
