@@ -883,7 +883,8 @@ function renderGaji(){
   var feeRt=FEE_LOG.filter(function(f){return f.tipe==='rental';}).reduce(function(s,f){return s+f.jumlah;},0);
   var fee=feeTv+feeRt;
   var pokok=GAJI_COMP.pokok||0,potongan=GAJI_COMP.potongan||0,dibayar=GAJI_COMP.dibayar||0;
-  var net=pokok+fee-potongan,sisa=Math.max(0,net-dibayar);
+  var totalKasbon=KASBON.reduce(function(s,k){return s+k.jumlah;},0);
+  var net=pokok+fee-potongan-totalKasbon,sisa=Math.max(0,net-dibayar);
   document.getElementById('gaji-total').textContent=fmtRp(net);
   document.getElementById('gaji-pokok').textContent=fmtRp(pokok);
   document.getElementById('gaji-fee').textContent=fmtRp(fee);
