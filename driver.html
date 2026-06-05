@@ -452,7 +452,7 @@ async function loadAll(){
     }catch(ke){KASBON=[];}
     if(SETOR.length){var si=SETOR.map(function(x){return parseInt(x.id.replace('ST-',''))||0;});SCTR=Math.max.apply(null,si)+1;}
     setSS('ok','Online');renderAll();
-  }catch(e){setSS('error','Offline');console.error(e);}
+  }catch(e){setSS('error','Offline: '+e.message);console.error('loadAll error:',e);T('Error: '+e.message,'err');}
 }
 function r2p(r){return{id:r.id,tipe:r.tipe,nama:r.nama,hp:r.hp,rute:r.rute,driver:r.driver,armStr:r.arm_str,tgl:r.tgl,jadwal:r.jadwal,seats:r.seats||[],pnp:r.pnp||0,bandara:r.bandara,mahasiswa:r.mahasiswa,total:r.total||0,mulai:r.mulai,selesai:r.selesai,hari:r.hari||0,sisa:r.sisa||0,dp:r.dp||0,catatan:r.catatan,status:r.status,mahasiswa_seats:r.mahasiswa_seats||[],luar_sumbar:r.luar_sumbar||false};}
 function setupRT(){sb.channel('drv-'+curDrv.nama).on('postgres_changes',{event:'*',schema:'public',table:'pesanan',filter:'driver=eq.'+curDrv.nama},function(){loadAll();}).on('postgres_changes',{event:'*',schema:'public',table:'setoran',filter:'driver=eq.'+curDrv.nama},function(){loadAll();}).on('postgres_changes',{event:'*',schema:'public',table:'fee_log',filter:'driver=eq.'+curDrv.nama},function(){loadAll();}).subscribe();}
