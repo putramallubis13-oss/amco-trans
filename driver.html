@@ -453,42 +453,44 @@ function T(m,t){var e=document.getElementById('tst');e.textContent=m;e.style.bac
 async function loadAll(){
   setSS('syncing','Memuat...');
   try{
-    setSS('syncing','Load pesanan...');
-    var p=await sb.from('pesanan').select('*').eq('driver',curDrv.nama).order('tgl',{ascending:false});
+    var drv=curDrv.nama;
+    var p=await sb.from('pesanan').select('*').eq('driver',drv).order('tgl',{ascending:false});
     if(p.error)throw new Error('pesanan: '+p.error.message);
-    
-    setSS('syncing','Load setoran...');
-    var s=await sb.from('setoran').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false});
+    var s=await sb.from('setoran').select('*').eq('driver',drv).order('created_at',{ascending:false});
     if(s.error)throw new Error('setoran: '+s.error.message);
-    
-    setSS('syncing','Load fee...');
-    var f=await sb.from('fee_log').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false});
+    var f=await sb.from('fee_log').select('*').eq('driver',drv).order('created_at',{ascending:false});
     if(f.error)throw new Error('fee_log: '+f.error.message);
-    
-    setSS('syncing','Load gaji...');
-    var gc=await sb.from('gaji_comp').select('*').eq('driver',curDrv.nama);
+    var gc=await sb.from('gaji_comp').select('*').eq('driver',drv);
     if(gc.error)throw new Error('gaji_comp: '+gc.error.message);
-    
-    var gr=await sb.from('gaji_rw').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false});
+    var gr=await sb.from('gaji_rw').select('*').eq('driver',drv).order('created_at',{ascending:false});
     if(gr.error)throw new Error('gaji_rw: '+gr.error.message);
-
     DB=(p.data||[]).map(r2p);
-    SETOR=s.data||[];FEE_LOG=f.data||[];
+    SETOR=s.data||[];
+    FEE_LOG=f.data||[];
     if(gc.data&&gc.data.length)GAJI_COMP=gc.data[0];
     GAJI_RW=gr.data||[];
-    
     try{
-      var kb=await sb.from('kasbon').select('*').eq('driver',curDrv.nama).order('created_at',{ascending:false});
-      KASBON=kb.data||[];
+      var kb=await sb.from('kasbon').select('*').eq('driver',drv).order('created_at',{ascending:false});
+      KASBON=(kb.data)||[];
       if(KASBON.length){var ki=KASBON.map(function(x){return parseInt(x.id.replace('KB-',''))||0;});KCTR=Math.max.apply(null,ki)+1;}
     }catch(ke){KASBON=[];}
-    
-    if(SETOR.length){var si=SETOR.map(function(x){return parseInt(x.id.replace('ST-',''))||0;});SCTR=Math.max.apply(null,si)+1;}
+    if(SETOR.length){
+      var si=SETOR.map(function(x){return parseInt((x.id||'').replace('ST-',''))||0;});
+      SCTR=Math.max.apply(null,si)+1;
+    }
     setSS('ok','Online');renderAll();
   }catch(e){setSS('error','Offline');T(e.message,'err');console.error(e);}
 }
 function r2p(r){return{id:r.id,tipe:r.tipe,nama:r.nama,hp:r.hp,rute:r.rute,driver:r.driver,armStr:r.arm_str,tgl:r.tgl,jadwal:r.jadwal,seats:r.seats||[],pnp:r.pnp||0,bandara:r.bandara,mahasiswa:r.mahasiswa,total:r.total||0,mulai:r.mulai,selesai:r.selesai,hari:r.hari||0,sisa:r.sisa||0,dp:r.dp||0,catatan:r.catatan,status:r.status,mahasiswa_seats:r.mahasiswa_seats||[],luar_sumbar:r.luar_sumbar||false};}
-function setupRT(){sb.channel('drv-'+curDrv.nama).on('postgres_changes',{event:'*',schema:'public',table:'pesanan',filter:'driver=eq.'+curDrv.nama},function(){loadAll();}).on('postgres_changes',{event:'*',schema:'public',table:'setoran',filter:'driver=eq.'+curDrv.nama},function(){loadAll();}).on('postgres_changes',{event:'*',schema:'public',table:'fee_log',filter:'driver=eq.'+curDrv.nama},function(){loadAll();}).subscribe();}
+
+var rtChannel=null;
+function setupRT(){
+  /* Realtime dinonaktifkan sementara - pakai polling manual */
+  /* Refresh data setiap 30 detik */
+  setInterval(function(){
+    if(curDrv)loadAll();
+  },30000);
+}
 
 /* ── STATUS — update semua pesanan dalam grup ── */
 async function setStatusGrup(btn,ns){
@@ -515,25 +517,23 @@ async function toggleMhs(pesananId,seat){
 function renderJadwal(){
   today=getToday(); /* selalu update tanggal terkini */
   var sudahSetor=getSudahSetor();
-  /* Tampil di jadwal: belum disetor DAN belum Selesai (kecuali rental yang sedang berjalan) */
+  /* Travel hari ini: hanya Menunggu atau Jalan (belum Selesai, belum disetor) */
   var todayP=DB.filter(function(p){
-    if(p.status==='Batal')return false;
-    if(p.tipe==='travel'){
-      /* Travel: tampil jika hari ini dan belum disetor */
-      return p.tgl===today&&sudahSetor.indexOf(String(p.id))===-1;
-    }
-    return false; /* rental dihandle terpisah */
+    if(p.tipe!=='travel'||p.status==='Batal'||p.status==='Selesai')return false;
+    return p.tgl===today&&sudahSetor.indexOf(String(p.id))===-1;
   });
-  var mendatangP=DB.filter(function(p){return p.tgl>today&&p.status!=='Batal'&&p.tipe==='travel'&&sudahSetor.indexOf(String(p.id))===-1;});
+  var mendatangP=DB.filter(function(p){
+    return p.tipe==='travel'&&(p.status==='Menunggu')&&p.tgl>today&&sudahSetor.indexOf(String(p.id))===-1;
+  });
 
   /* Kelompokkan travel hari ini per tujuan+jadwal */
   var travelGroups=groupTravel(todayP.filter(function(p){return p.tipe==='travel';}));
-  /* Rental hari ini: mulai <= today <= selesai */
+  /* Rental hari ini: aktif (Menunggu/Jalan) dan periode mencakup hari ini */
   var rentalToday=DB.filter(function(p){
-    if(p.tipe!=='rental'||p.status==='Batal')return false;
+    if(p.tipe!=='rental'||p.status==='Batal'||p.status==='Selesai')return false;
     var mulai=(p.mulai||p.tgl||'').trim().slice(0,10);
     var selesai=(p.selesai||p.tgl||'').trim().slice(0,10);
-    return mulai<=today&&today<=selesai;
+    return mulai<=today&&today<=selesai&&sudahSetor.indexOf(String(p.id))===-1;
   });
 
   /* Rental mendatang: mulai > today (belum mulai) */
@@ -803,7 +803,7 @@ async function kirimSetorTravel(){
   var totBiaya=biayaV.reduce(function(s,b){return s+b.jumlah;},0);
   var bersih=Math.max(0,totPend-totMhsDis-totBiaya);
   setSS('syncing','Mengirim...');
-  var id='ST-'+String(SCTR++).padStart(3,'0');
+  var id='ST-'+Date.now();
   var s={
     id,driver:curDrv.nama,tgl,tipe_setoran:'travel',
     pesanan_ids:selTvPes.slice(),
@@ -838,9 +838,10 @@ async function kirimSetorTravel(){
 /* ── SETORAN RENTAL ── */
 function renderRentalList(){
   var sudahSetor=getSudahSetor();
+  /* Hanya tampil rental Selesai yang BELUM disetor sama sekali */
   var rentals=DB.filter(function(p){
     return p.tipe==='rental'&&p.status==='Selesai'&&
-    (sudahSetor.indexOf(String(p.id))===-1||(p.sisa||0)>0);
+    sudahSetor.indexOf(String(p.id))===-1;
   });
   var el=document.getElementById('srt-pes-list');
   if(!rentals.length){el.innerHTML='<div class="kosong" style="padding:12px"><i class="ti ti-car"></i><div style="font-size:10px">Tidak ada pesanan rental.</div></div>';return;}
@@ -884,7 +885,7 @@ async function kirimSetorRental(){
   var totBiaya=biayaV.reduce(function(s,b){return s+b.jumlah;},0);
   var bersih=Math.max(0,jml-totBiaya);
   setSS('syncing','Mengirim...');
-  var id='ST-'+String(SCTR++).padStart(3,'0');
+  var id='ST-'+Date.now();
   var s={id,driver:curDrv.nama,tgl,tipe_setoran:'rental',pesanan_ids:[selRtPes],pesanan_detail:[{id:p.id,rute:p.rute,hari:p.hari,total:p.total,luar_sumbar:p.luar_sumbar}],jumlah:bersih,jumlah_kotor:jml,total_biaya:totBiaya,biaya_detail:biayaV,keterangan:ket||'Setoran rental '+p.id,status:'Menunggu'};
   var{error}=await sb.from('setoran').insert(s);
   if(error){T('Gagal: '+error.message,'err');return;}
@@ -993,8 +994,7 @@ function renderRiwayatSetor(){
 
 function filterRw(s){fRw=s;renderRiwayat();}
 function renderRiwayat(){
-  /* Hanya tampil pesanan Selesai di tab riwayat trip */
-  var sudahSetor=getSudahSetor();
+  /* Riwayat trip: semua pesanan Selesai */
   var data=DB.filter(function(p){return p.status==='Selesai';});
   var travelGroups=groupTravel(data.filter(function(p){return p.tipe==='travel';}));
   var rentals=data.filter(function(p){return p.tipe==='rental';});
