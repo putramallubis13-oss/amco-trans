@@ -307,11 +307,11 @@ select.fi{appearance:none}
       <div><div class="fl" style="margin-bottom:3px">Driver</div><select class="fi" id="fil-drv" onchange="renderP()"><option value="">Semua</option><option value="Zakaria">Zakaria</option><option value="Rahmat Hidayat">Rahmat Hidayat</option></select></div>
     </div>
     <div class="filter-row" style="margin-top:7px;margin-bottom:0">
-      <div class="fbtn active" onclick="setFS('',this)">Semua</div>
+      <div class="fbtn active" onclick="setFS('',this)">Aktif</div>
       <div class="fbtn" onclick="setFS('Menunggu',this)">Menunggu</div>
       <div class="fbtn" onclick="setFS('Jalan',this)">Jalan</div>
-      <div class="fbtn" onclick="setFS('Selesai',this)">Selesai</div>
-      <div class="fbtn" onclick="setFS('Batal',this)">Batal</div>
+      <div class="fbtn" onclick="setFS('Selesai',this)">Riwayat Selesai</div>
+      <div class="fbtn" onclick="setFS('Batal',this)">Riwayat Batal</div>
     </div>
   </div>
   <div id="pesanan-list"><div class="kosong"><i class="ti ti-loader"></i><div>Memuat data...</div></div></div>
@@ -574,7 +574,9 @@ select.fi{appearance:none}
     <div class="gaji-head"><div class="drv-av av-b">ZK</div><div style="flex:1"><div style="font-size:13px;font-weight:700">Zakaria</div><div style="font-size:10px;color:var(--mt)">Hiace 8 Kursi · AB 7845 HH</div></div><span id="gaji-badge-zk" class="gaji-badge g-belum">Belum Dibayar</span></div>
     <div class="row-sb"><span class="rl">Gaji Pokok</span><span class="rv" id="gp-zk">Rp 0</span></div>
     <div class="row-sb"><span class="rl" style="color:#1e7e44;font-weight:600">Fee (otomatis)</span><span class="rv" style="color:#1e7e44;font-weight:700" id="gf-zk">Rp 0</span></div>
-    <div class="row-sb"><span class="rl">Potongan</span><span class="rv" style="color:var(--dn)" id="gpot-zk">Rp 0</span></div>
+    <div class="row-sb"><span class="rl">Potongan Lain</span><span class="rv" style="color:var(--dn)" id="gpot-zk">Rp 0</span></div>
+    <div class="row-sb"><span class="rl">BPJS</span><span class="rv" style="color:#6b21a8" id="gbpjs-zk">Rp 0</span></div>
+    <div class="row-sb"><span class="rl">Angsuran Bank</span><span class="rv" style="color:#b7770d" id="gangsuran-zk">Rp 0</span></div>
     <div class="divider"></div>
     <div class="row-sb"><span style="font-size:11px;font-weight:600">Total</span><span style="font-size:14px;font-weight:700;color:var(--sc)" id="gnet-zk">Rp 0</span></div>
     <div class="row-sb" style="margin-top:3px"><span class="rl">Sudah Dibayar</span><span class="rv" style="color:var(--sc)" id="gbayar-zk">Rp 0</span></div>
@@ -590,7 +592,9 @@ select.fi{appearance:none}
     <div class="gaji-head"><div class="drv-av av-g">RH</div><div style="flex:1"><div style="font-size:13px;font-weight:700">Rahmat Hidayat</div><div style="font-size:10px;color:var(--mt)">Hiace 9 Kursi · AB 7167 BE</div></div><span id="gaji-badge-rh" class="gaji-badge g-belum">Belum Dibayar</span></div>
     <div class="row-sb"><span class="rl">Gaji Pokok</span><span class="rv" id="gp-rh">Rp 0</span></div>
     <div class="row-sb"><span class="rl" style="color:#1e7e44;font-weight:600">Fee (otomatis)</span><span class="rv" style="color:#1e7e44;font-weight:700" id="gf-rh">Rp 0</span></div>
-    <div class="row-sb"><span class="rl">Potongan</span><span class="rv" style="color:var(--dn)" id="gpot-rh">Rp 0</span></div>
+    <div class="row-sb"><span class="rl">Potongan Lain</span><span class="rv" style="color:var(--dn)" id="gpot-rh">Rp 0</span></div>
+    <div class="row-sb"><span class="rl">BPJS</span><span class="rv" style="color:#6b21a8" id="gbpjs-rh">Rp 0</span></div>
+    <div class="row-sb"><span class="rl">Angsuran Bank</span><span class="rv" style="color:#b7770d" id="gangsuran-rh">Rp 0</span></div>
     <div class="divider"></div>
     <div class="row-sb"><span style="font-size:11px;font-weight:600">Total</span><span style="font-size:14px;font-weight:700;color:var(--sc)" id="gnet-rh">Rp 0</span></div>
     <div class="row-sb" style="margin-top:3px"><span class="rl">Sudah Dibayar</span><span class="rv" style="color:var(--sc)" id="gbayar-rh">Rp 0</span></div>
@@ -728,7 +732,7 @@ async function loadAll(){
       sb.from('servis_state').select('*')
     ]);
     DB=(p.data||[]).map(r2p);SETOR=s.data||[];BIAYA=b.data||[];FEE_LOG=f.data||[];
-    if(gc.data)gc.data.forEach(function(r){GAJI_COMP[r.driver]={pokok:r.pokok,potongan:r.potongan,dibayar:r.dibayar};});
+    if(gc.data)gc.data.forEach(function(r){GAJI_COMP[r.driver]={pokok:r.pokok,potongan:r.potongan,bpjs:r.bpjs||0,angsuran:r.angsuran||0,dibayar:r.dibayar};});
     GAJI_RW=gr.data||[];
     LOGS=(lg.data||[]).map(function(l){return{tipe:l.tipe,aksi:l.aksi,det:l.detail,color:l.color,waktu:l.waktu};});
     /* Load kasbon terpisah - aman jika tabel belum ada */
@@ -754,11 +758,17 @@ async function svP(p){await sb.from('pesanan').upsert(p2r(p));setSS('ok','Tersim
 async function svS(s){await sb.from('setoran').upsert(s);}
 async function svB(b){await sb.from('biaya').upsert(b);}
 async function svF(f){await sb.from('fee_log').upsert(f);}
-async function svGC(drv){var c=GAJI_COMP[drv];await sb.from('gaji_comp').upsert({driver:drv,pokok:c.pokok,potongan:c.potongan,dibayar:c.dibayar,updated_at:new Date().toISOString()});}
+async function svGC(drv){var c=GAJI_COMP[drv];await sb.from('gaji_comp').upsert({driver:drv,pokok:c.pokok,potongan:c.potongan,bpjs:c.bpjs||0,angsuran:c.angsuran||0,dibayar:c.dibayar||0});}
 async function svGR(g){await sb.from('gaji_rw').upsert(g);}
 async function svLog(l){await sb.from('activity_log').insert({tipe:l.tipe,aksi:l.aksi,detail:l.det,color:l.color,waktu:l.waktu});}
 async function svSrv(arm){var s=SRV_ST[arm];await sb.from('servis_state').upsert({armada:arm,km_saved:s.kmSaved,km_time:s.kmTime,riwayat:s.riwayat,next_km:s.nextKm,updated_at:new Date().toISOString()});}
-function setupRT(){sb.channel('hamco').on('postgres_changes',{event:'*',schema:'public',table:'setoran'},function(){loadAll();}).on('postgres_changes',{event:'*',schema:'public',table:'pesanan'},function(){loadAll();}).subscribe();}
+function setupRT(){
+  /* Realtime + polling 15 detik */
+  try{
+    sb.channel('hamco').on('postgres_changes',{event:'*',schema:'public',table:'setoran'},function(){loadAll();}).on('postgres_changes',{event:'*',schema:'public',table:'pesanan'},function(){loadAll();}).subscribe();
+  }catch(e){}
+  setInterval(function(){if(document.visibilityState!=='hidden')loadAll();},15000);
+}
 
 /* ── HELPERS ── */
 function fmtRp(n){return'Rp '+(n||0).toLocaleString('id-ID');}
@@ -1129,12 +1139,15 @@ function renderGaji(){
   ['Zakaria','Rahmat Hidayat'].forEach(function(drv){
     var pfx=drv==='Zakaria'?'zk':'rh',c=GAJI_COMP[drv],fee=getFeeByBln(drv,bln);
     var kasbonDrv=KASBON_ALL.filter(function(k){return k.driver===drv&&(k.tgl||'').startsWith(bln);}).reduce(function(s,k){return s+k.jumlah;},0);
-    var net=c.pokok+fee-c.potongan-kasbonDrv,sisa=Math.max(0,net-c.dibayar);
+    var bpjsDrv=c.bpjs||0,angsuranDrv=c.angsuran||0;
+    var net=c.pokok+fee-c.potongan-bpjsDrv-angsuranDrv-kasbonDrv,sisa=Math.max(0,net-c.dibayar);
     document.getElementById('gp-'+pfx).textContent=fmtRp(c.pokok);
     document.getElementById('gf-'+pfx).textContent=fmtRp(fee);
     document.getElementById('gpot-'+pfx).textContent=fmtRp(c.potongan);
     var kbEl=document.getElementById('gkasbon-'+pfx);
     if(kbEl){kbEl.textContent=fmtRp(kasbonDrv);kbEl.parentElement.style.display=kasbonDrv>0?'flex':'none';}
+    var bpjsEl=document.getElementById('gbpjs-'+pfx);if(bpjsEl)bpjsEl.textContent=fmtRp(bpjsDrv);
+    var angEl=document.getElementById('gangsuran-'+pfx);if(angEl)angEl.textContent=fmtRp(angsuranDrv);
     document.getElementById('gnet-'+pfx).textContent=fmtRp(net);
     document.getElementById('gbayar-'+pfx).textContent=fmtRp(c.dibayar);
     document.getElementById('gsisa-'+pfx).textContent=fmtRp(sisa);
@@ -1153,7 +1166,7 @@ function renderGaji(){
   var f1=getFeeByBln('Zakaria',bln),f2=getFeeByBln('Rahmat Hidayat',bln),c1=GAJI_COMP['Zakaria'],c2=GAJI_COMP['Rahmat Hidayat'];
   var kb1=KASBON_ALL.filter(function(k){return k.driver==='Zakaria'&&(k.tgl||'').startsWith(bln);}).reduce(function(s,k){return s+k.jumlah;},0);
   var kb2=KASBON_ALL.filter(function(k){return k.driver==='Rahmat Hidayat'&&(k.tgl||'').startsWith(bln);}).reduce(function(s,k){return s+k.jumlah;},0);
-  var n1=c1.pokok+f1-c1.potongan-kb1,n2=c2.pokok+f2-c2.potongan-kb2;
+  var n1=c1.pokok+f1-c1.potongan-(c1.bpjs||0)-(c1.angsuran||0)-kb1,n2=c2.pokok+f2-c2.potongan-(c2.bpjs||0)-(c2.angsuran||0)-kb2;
   document.getElementById('gaji-total').textContent=fmtRp(n1+n2);
   document.getElementById('gaji-tot-zk').textContent=fmtRp(n1);
   document.getElementById('gaji-tot-rh').textContent=fmtRp(n2);
@@ -1164,11 +1177,32 @@ function renderGaji(){
 function openGajiForm(drv){
   var c=GAJI_COMP[drv],fee=getFee(drv);
   document.getElementById('m-title').textContent='Atur Gaji Pokok';document.getElementById('m-sub').textContent=drv;
-  document.getElementById('m-body').innerHTML='<div style="background:#eafaf1;border:.5px solid #a9dfbf;border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:10px;color:#1e7e44">Fee '+fmtRp(fee)+' dihitung otomatis dari setoran.</div><div class="fg"><div class="fl">Gaji Pokok (Rp)</div><input class="fi" type="number" id="gf-pokok" value="'+c.pokok+'"></div><div class="fg"><div class="fl">Potongan (Rp)</div><input class="fi" type="number" id="gf-potongan" value="'+c.potongan+'"></div><div style="background:var(--pr);border-radius:8px;padding:9px 12px;margin-bottom:8px;font-size:11px;color:#fff">Total: <strong style="color:var(--ac)" id="gf-prev">'+fmtRp(c.pokok+fee-c.potongan)+'</strong></div><button class="btn-pr" onclick="simpanKompGaji(\''+drv+'\')">Simpan</button>';
-  ['gf-pokok','gf-potongan'].forEach(function(id){document.getElementById(id).addEventListener('input',function(){var p2=parseInt(document.getElementById('gf-pokok').value)||0,pt=parseInt(document.getElementById('gf-potongan').value)||0;var el=document.getElementById('gf-prev');if(el)el.textContent=fmtRp(p2+fee-pt);});});
+  document.getElementById('m-body').innerHTML=
+    '<div style="background:#eafaf1;border:.5px solid #a9dfbf;border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:10px;color:#1e7e44">Fee '+fmtRp(fee)+' dihitung otomatis dari setoran.</div>'+
+    '<div class="fg"><div class="fl">Gaji Pokok (Rp)</div><input class="fi" type="number" id="gf-pokok" value="'+(c.pokok||0)+'"></div>'+
+    '<div class="fg"><div class="fl">Potongan Lain (Rp)</div><input class="fi" type="number" id="gf-potongan" value="'+(c.potongan||0)+'"></div>'+
+    '<div class="fg"><div class="fl">BPJS (Rp)</div><input class="fi" type="number" id="gf-bpjs" value="'+(c.bpjs||0)+'"></div>'+
+    '<div class="fg"><div class="fl">Angsuran Bank (Rp)</div><input class="fi" type="number" id="gf-angsuran" value="'+(c.angsuran||0)+'"></div>'+
+    '<div style="background:var(--pr);border-radius:8px;padding:9px 12px;margin-bottom:8px;font-size:11px;color:#fff">Total Gaji Bersih: <strong style="color:var(--ac)" id="gf-prev">'+fmtRp(c.pokok+fee-c.potongan-(c.bpjs||0)-(c.angsuran||0))+'</strong></div>'+
+    '<button class="btn-pr" onclick="simpanKompGaji(\''+drv+'\')">Simpan</button>';
+  ['gf-pokok','gf-potongan','gf-bpjs','gf-angsuran'].forEach(function(id){
+    document.getElementById(id).addEventListener('input',function(){
+      var p2=parseInt(document.getElementById('gf-pokok').value)||0;
+      var pt=parseInt(document.getElementById('gf-potongan').value)||0;
+      var bpjs=parseInt(document.getElementById('gf-bpjs').value)||0;
+      var ang=parseInt(document.getElementById('gf-angsuran').value)||0;
+      var el=document.getElementById('gf-prev');if(el)el.textContent=fmtRp(p2+fee-pt-bpjs-ang);
+    });
+  });
   document.getElementById('mov').classList.remove('h');
 }
-async function simpanKompGaji(drv){GAJI_COMP[drv].pokok=parseInt(document.getElementById('gf-pokok').value)||0;GAJI_COMP[drv].potongan=parseInt(document.getElementById('gf-potongan').value)||0;await svGC(drv);await addLog('gaji','Gaji pokok diubah',drv,'#e8a020');closeM();renderGaji();T('Disimpan!');}
+async function simpanKompGaji(drv){
+  GAJI_COMP[drv].pokok=parseInt(document.getElementById('gf-pokok').value)||0;
+  GAJI_COMP[drv].potongan=parseInt(document.getElementById('gf-potongan').value)||0;
+  GAJI_COMP[drv].bpjs=parseInt(document.getElementById('gf-bpjs').value)||0;
+  GAJI_COMP[drv].angsuran=parseInt(document.getElementById('gf-angsuran').value)||0;
+  await svGC(drv);await addLog('gaji','Gaji pokok diubah',drv,'#e8a020');closeM();renderGaji();T('Disimpan!');
+}
 function bayarGaji(drv){
   var c=GAJI_COMP[drv],fee=getFee(drv),net=c.pokok+fee-c.potongan,sisa=Math.max(0,net-c.dibayar);
   if(sisa===0){T('Gaji sudah lunas','err');return;}
@@ -1385,8 +1419,11 @@ function toggleDetail(gid){
 function renderP(){
   var tgl=document.getElementById('fil-tgl').value,drv=document.getElementById('fil-drv').value;
   var q=getSearchQ();
+  /* Cek apakah mode riwayat (filter Selesai/Batal) */
+  var modeRwyt=(fStat==='Selesai'||fStat==='Batal');
   var data=DB.filter(function(p){
-    if(fStat&&p.status!==fStat)return false;
+    if(fStat){if(p.status!==fStat)return false;}
+    else{/* Default: hanya aktif */if(p.status==='Selesai'||p.status==='Batal')return false;}
     if(tgl&&p.tgl!==tgl&&!(p.tipe==='rental'&&getTglR(p).indexOf(tgl)!==-1))return false;
     if(drv&&p.driver!==drv)return false;
     if(q){var hay=(p.nama+' '+(p.hp||'')+' '+p.id+' '+p.rute).toLowerCase();if(hay.indexOf(q)===-1)return false;}
