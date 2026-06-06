@@ -293,13 +293,26 @@ select.fi{appearance:none}
 
 <!-- RIWAYAT -->
 <div id="pg-riwayat" class="pg">
-  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px">
-    <div style="padding:5px 12px;border-radius:20px;font-size:9px;cursor:pointer;background:var(--pr);color:#fff;font-weight:600" onclick="filterRw('',this)">Semua</div>
-    <div style="padding:5px 12px;border-radius:20px;font-size:9px;cursor:pointer;background:#fef9e7;color:#9a6b0a;font-weight:600" onclick="filterRw('Menunggu',this)">Menunggu</div>
-    <div style="padding:5px 12px;border-radius:20px;font-size:9px;cursor:pointer;background:#eafaf1;color:#1e7e44;font-weight:600" onclick="filterRw('Jalan',this)">Jalan</div>
-    <div style="padding:5px 12px;border-radius:20px;font-size:9px;cursor:pointer;background:#eaf4fb;color:#1a6fa0;font-weight:600" onclick="filterRw('Selesai',this)">Selesai</div>
+  <!-- TAB RIWAYAT -->
+  <div style="display:flex;gap:5px;margin-bottom:10px;background:#f4f6fa;border-radius:10px;padding:3px">
+    <div id="rw-tab-trip" onclick="swRwTab('trip')" style="flex:1;padding:7px;border-radius:8px;text-align:center;font-size:10px;font-weight:600;cursor:pointer;background:var(--pr);color:#fff">Trip Selesai</div>
+    <div id="rw-tab-setor" onclick="swRwTab('setor')" style="flex:1;padding:7px;border-radius:8px;text-align:center;font-size:10px;font-weight:600;cursor:pointer;color:var(--mt)">Setoran</div>
   </div>
-  <div id="riwayat-list"></div>
+
+  <!-- RIWAYAT TRIP -->
+  <div id="rw-panel-trip">
+    <div id="riwayat-list"></div>
+  </div>
+
+  <!-- RIWAYAT SETORAN -->
+  <div id="rw-panel-setor" style="display:none">
+    <!-- Sub tab travel / rental -->
+    <div style="display:flex;gap:5px;margin-bottom:9px">
+      <div id="rws-tab-tv" onclick="swRwSetorTab('travel')" style="flex:1;padding:6px;border-radius:8px;text-align:center;font-size:10px;font-weight:600;cursor:pointer;background:#eaf4fb;color:#1a6fa0;border:.5px solid #b5d4f4">Travel</div>
+      <div id="rws-tab-rt" onclick="swRwSetorTab('rental')" style="flex:1;padding:6px;border-radius:8px;text-align:center;font-size:10px;font-weight:600;cursor:pointer;background:#f4f6fa;color:var(--mt)">Rental</div>
+    </div>
+    <div id="riwayat-setor-list"></div>
+  </div>
 </div>
 
 <!-- GAJI -->
@@ -501,8 +514,17 @@ async function toggleMhs(pesananId,seat){
 /* ── RENDER JADWAL ── */
 function renderJadwal(){
   today=getToday(); /* selalu update tanggal terkini */
-  var todayP=DB.filter(function(p){return p.tgl===today&&p.status!=='Batal';});
-  var mendatangP=DB.filter(function(p){return p.tgl>today&&p.status!=='Batal'&&p.tipe==='travel';});
+  var sudahSetor=getSudahSetor();
+  /* Tampil di jadwal: belum disetor DAN belum Selesai (kecuali rental yang sedang berjalan) */
+  var todayP=DB.filter(function(p){
+    if(p.status==='Batal')return false;
+    if(p.tipe==='travel'){
+      /* Travel: tampil jika hari ini dan belum disetor */
+      return p.tgl===today&&sudahSetor.indexOf(String(p.id))===-1;
+    }
+    return false; /* rental dihandle terpisah */
+  });
+  var mendatangP=DB.filter(function(p){return p.tgl>today&&p.status!=='Batal'&&p.tipe==='travel'&&sudahSetor.indexOf(String(p.id))===-1;});
 
   /* Kelompokkan travel hari ini per tujuan+jadwal */
   var travelGroups=groupTravel(todayP.filter(function(p){return p.tipe==='travel';}));
@@ -703,15 +725,21 @@ function updBiaya(listId,id,field,val){
 /* ── SETORAN TRAVEL ── */
 var mhsSetor={};
 
-function loadPesananTravel(){
-  /* Kumpulkan pesanan_ids yang sudah pernah disetor */
+function getSudahSetor(){
   var sudahSetor=[];
   SETOR.forEach(function(s){
-    (s.pesanan_ids||[]).forEach(function(id){sudahSetor.push(id);});
+    var ids=s.pesanan_ids||[];
+    /* Handle jika pesanan_ids tersimpan sebagai string JSON */
+    if(typeof ids==='string'){try{ids=JSON.parse(ids);}catch(e){ids=[];}}
+    ids.forEach(function(id){sudahSetor.push(String(id));});
   });
-  /* Hanya tampil pesanan Selesai yang BELUM pernah disetor */
+  return sudahSetor;
+}
+
+function loadPesananTravel(){
+  var sudahSetor=getSudahSetor();
   var pes=DB.filter(function(p){
-    return p.tipe==='travel'&&p.status==='Selesai'&&sudahSetor.indexOf(p.id)===-1;
+    return p.tipe==='travel'&&p.status==='Selesai'&&sudahSetor.indexOf(String(p.id))===-1;
   });
   selTvPes=pes.map(function(p){return p.id;});
   var el=document.getElementById('stv-pes-list');
@@ -809,12 +837,10 @@ async function kirimSetorTravel(){
 
 /* ── SETORAN RENTAL ── */
 function renderRentalList(){
-  /* Hanya tampil rental yang sudah Selesai dan belum disetor */
-  var sudahSetor=[];
-  SETOR.forEach(function(s){(s.pesanan_ids||[]).forEach(function(id){sudahSetor.push(id);});});
+  var sudahSetor=getSudahSetor();
   var rentals=DB.filter(function(p){
     return p.tipe==='rental'&&p.status==='Selesai'&&
-    (sudahSetor.indexOf(p.id)===-1||(p.sisa||0)>0);
+    (sudahSetor.indexOf(String(p.id))===-1||(p.sisa||0)>0);
   });
   var el=document.getElementById('srt-pes-list');
   if(!rentals.length){el.innerHTML='<div class="kosong" style="padding:12px"><i class="ti ti-car"></i><div style="font-size:10px">Tidak ada pesanan rental.</div></div>';return;}
@@ -908,11 +934,68 @@ function renderSetoran(){
   }).join(''):'<div class="kosong"><i class="ti ti-inbox"></i><div style="font-size:11px">Belum ada setoran.</div></div>';
 }
 
-/* ── RENDER RIWAYAT ── */
+/* ── RIWAYAT TABS ── */
+var curRwTab='trip',curRwSetorTab='travel';
+
+function swRwTab(tab){
+  curRwTab=tab;
+  document.getElementById('rw-panel-trip').style.display=tab==='trip'?'block':'none';
+  document.getElementById('rw-panel-setor').style.display=tab==='setor'?'block':'none';
+  document.getElementById('rw-tab-trip').style.background=tab==='trip'?'var(--pr)':'transparent';
+  document.getElementById('rw-tab-trip').style.color=tab==='trip'?'#fff':'var(--mt)';
+  document.getElementById('rw-tab-setor').style.background=tab==='setor'?'var(--pr)':'transparent';
+  document.getElementById('rw-tab-setor').style.color=tab==='setor'?'#fff':'var(--mt)';
+  if(tab==='setor')renderRiwayatSetor();
+}
+
+function swRwSetorTab(tab){
+  curRwSetorTab=tab;
+  document.getElementById('rws-tab-tv').style.background=tab==='travel'?'#eaf4fb':'#f4f6fa';
+  document.getElementById('rws-tab-tv').style.color=tab==='travel'?'#1a6fa0':'var(--mt)';
+  document.getElementById('rws-tab-tv').style.border=tab==='travel'?'.5px solid #b5d4f4':'.5px solid transparent';
+  document.getElementById('rws-tab-rt').style.background=tab==='rental'?'#eafaf1':'#f4f6fa';
+  document.getElementById('rws-tab-rt').style.color=tab==='rental'?'#1e7e44':'var(--mt)';
+  document.getElementById('rws-tab-rt').style.border=tab==='rental'?'.5px solid #a9dfbf':'.5px solid transparent';
+  renderRiwayatSetor();
+}
+
+function renderRiwayatSetor(){
+  var el=document.getElementById('riwayat-setor-list');if(!el)return;
+  var stor=SETOR.filter(function(s){return (s.tipe_setoran||'travel')===curRwSetorTab;});
+  if(!stor.length){el.innerHTML='<div class="kosong"><i class="ti ti-inbox"></i><div style="font-size:11px">Belum ada setoran '+curRwSetorTab+'.</div></div>';return;}
+  el.innerHTML=stor.map(function(s){
+    var ok=s.status==='Dikonfirmasi',wt=s.status==='Menunggu';
+    var bersih=s.jumlah||0,kotor=s.jumlah_kotor||bersih;
+    var pesD=s.pesanan_detail||[];
+    var biayaD=s.biaya_detail||[];
+    var isTv=(s.tipe_setoran||'travel')==='travel';
+    var feeH=FEE_LOG.filter(function(f){return(s.pesanan_ids||[]).indexOf(f.pesanan_id)!==-1;}).reduce(function(a,f){return a+f.jumlah;},0);
+    return'<div class="setor-hist">'+
+      '<div class="sh-header">'+
+        '<div style="flex:1">'+
+          '<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">'+
+            '<span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;background:'+(isTv?'#eaf4fb':'#eafaf1')+';color:'+(isTv?'#1a6fa0':'#1e7e44')+'">'+(isTv?'TRAVEL':'RENTAL')+'</span>'+
+            '<span style="font-size:10px;color:var(--mt)">'+s.id+' · '+s.tgl+'</span>'+
+          '</div>'+
+          '<div class="sh-bersih">'+fmtRp(bersih)+'</div>'+
+        '</div>'+
+        '<span class="sh-status '+(ok?'ss-ok':wt?'ss-wt':'ss-no')+'">'+s.status+'</span>'+
+      '</div>'+
+      '<div class="rincian-box"><div class="rin-title">Rincian</div>'+
+        (pesD.length?pesD.map(function(p){return'<div class="rin-row"><span>'+(isTv?(p.id+' · '+p.pnp+' pnp'):( p.id+' · '+p.hari+' hari'))+'</span><span>'+fmtRp(p.total||kotor)+'</span></div>';}).join(''):'<div class="rin-row"><span>Setoran kotor</span><span>'+fmtRp(kotor)+'</span></div>')+
+        (s.diskon_mhs>0?'<div class="rin-row"><span style="color:#6b21a8">🎓 Diskon '+(s.jumlah_mhs||0)+' × Rp 10.000</span><span style="color:#6b21a8">−'+fmtRp(s.diskon_mhs)+'</span></div>':'')+
+        biayaD.map(function(b){return'<div class="rin-row"><span style="color:var(--dn)">− '+b.nama+'</span><span style="color:var(--dn)">'+fmtRp(b.jumlah)+'</span></div>';}).join('')+
+        '<div class="rin-total"><span>Setoran Bersih</span><span style="color:var(--sc)">'+fmtRp(bersih)+'</span></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
 function filterRw(s){fRw=s;renderRiwayat();}
 function renderRiwayat(){
-  var data=fRw?DB.filter(function(p){return p.status===fRw;}):DB;
-  /* Kelompokkan travel per tujuan+jadwal+tanggal */
+  /* Hanya tampil pesanan Selesai di tab riwayat trip */
+  var sudahSetor=getSudahSetor();
+  var data=DB.filter(function(p){return p.status==='Selesai';});
   var travelGroups=groupTravel(data.filter(function(p){return p.tipe==='travel';}));
   var rentals=data.filter(function(p){return p.tipe==='rental';});
   var el=document.getElementById('riwayat-list');
@@ -1005,7 +1088,7 @@ function cpTxt(t){
 
 function SW(name,el){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('pg-'+name).classList.add('active');el.classList.add('active');}
 
-function renderAll(){renderJadwal();renderSetoran();renderRiwayat();renderGaji();updateDrvNotif();}
+function renderAll(){renderJadwal();renderSetoran();renderRiwayat();if(curRwTab==='setor')renderRiwayatSetor();renderGaji();updateDrvNotif();}
 
 mkBiayaRow('tv-biaya-list',tvBiayaRows,hitSetorTravel);
 mkBiayaRow('rt-biaya-list',rtBiayaRows,hitSetorRental);
