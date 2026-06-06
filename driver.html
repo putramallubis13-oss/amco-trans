@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>HAMCO TRANS — APK Driver</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<!-- Supabase via REST API langsung -->
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--pr:#1a3a5c;--ac:#e8a020;--bg:#f4f6fa;--cd:#fff;--tx:#1a2233;--mt:#6b7a99;--bd:rgba(26,58,92,0.12);--sc:#27ae60;--dn:#e74c3c;--warn:#f39c12}
@@ -356,65 +356,69 @@ select.fi{appearance:none}
 <script>
 const SB_URL='https://mzezxeomggazvrpuwpgu.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16ZXp4ZW9tZ2dhenZycHV3cGd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTQ2NTgsImV4cCI6MjA5NTczMDY1OH0.OMspKZMPkbH4W6KqjtMX0n_POsKcvySopvLGeDC38Lg';
-const SB_HDR={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
 
-/* Supabase REST helper via XMLHttpRequest */
-function xhrReq(method,url,body){
-  return new Promise(function(resolve,reject){
-    var x=new XMLHttpRequest();
-    x.open(method,url,true);
-    x.setRequestHeader('apikey',SB_KEY);
-    x.setRequestHeader('Authorization','Bearer '+SB_KEY);
-    x.setRequestHeader('Content-Type','application/json');
-    x.setRequestHeader('X-Client-Info','supabase-js/2.0.0');
-    if(method==='POST'||method==='PATCH')x.setRequestHeader('Prefer','return=minimal');
-    x.withCredentials=false;
-    x.onload=function(){
-      try{
-        var d=x.status===204?null:JSON.parse(x.responseText);
-        if(x.status>=200&&x.status<300)resolve({data:d,error:null});
-        else resolve({data:null,error:{message:(d&&d.message)||x.responseText}});
-      }catch(e){resolve({data:null,error:{message:x.responseText}});}
-    };
-    x.onerror=function(){reject(new Error('NetworkError: '+url));};
-    x.ontimeout=function(){reject(new Error('Timeout: '+url));};
-    x.timeout=15000;
-    x.send(body?JSON.stringify(body):null);
-  });
+
+function sbReq(method,table,params,body,cb){
+  var xhr=new XMLHttpRequest();
+  var url=SB_URL+'/rest/v1/'+table+(params?'?'+params:'');
+  xhr.open(method,url,true);
+  xhr.setRequestHeader('apikey',SB_KEY);
+  xhr.setRequestHeader('Authorization','Bearer '+SB_KEY);
+  xhr.setRequestHeader('Accept','application/json');
+  xhr.setRequestHeader('Content-Type','application/json');
+  if(method==='POST'||method==='PATCH')xhr.setRequestHeader('Prefer','return=minimal');
+  xhr.timeout=20000;
+  xhr.onload=function(){
+    try{
+      var d=xhr.status===204?[]:JSON.parse(xhr.responseText);
+      if(xhr.status>=200&&xhr.status<300)cb(null,Array.isArray(d)?d:[d]);
+      else cb((d&&d.message)||xhr.responseText,null);
+    }catch(e){cb(xhr.responseText,null);}
+  };
+  xhr.onerror=function(){cb('NetworkError',null);};
+  xhr.ontimeout=function(){cb('Timeout',null);};
+  xhr.send(body?JSON.stringify(body):null);
 }
 
 var sb={
   from:function(tbl){
     return{
-      select:function(col){
-        var q={_tbl:tbl,_col:col,_filters:[],_order:null};
-        q.eq=function(c,v){q._filters.push(c+'=eq.'+encodeURIComponent(v));return q;};
-        q.order=function(c,opt){q._order=c+'.'+(opt&&opt.ascending?'asc':'desc');return q;};
-        q.limit=function(n){return q;};
-        q.then=function(ok,err){
-          var url=SB_URL+'/rest/v1/'+tbl+'?select='+col;
-          q._filters.forEach(function(f){url+='&'+f;});
-          if(q._order)url+='&order='+q._order;
-          return xhrReq('GET',url,null).then(ok,err);
+      select:function(){
+        var filters=[],ord='';
+        var q={
+          eq:function(c,v){filters.push(c+'=eq.'+encodeURIComponent(v));return q;},
+          order:function(c,opt){ord='order='+c+'.'+(opt&&opt.ascending?'asc':'desc');return q;},
+          limit:function(){return q;},
+          then:function(ok){
+            var p=filters.join('&')+(ord?'&'+ord:'');
+            sbReq('GET',tbl,p,null,function(e,d){
+              ok({data:d,error:e?{message:e}:null});
+            });
+          }
         };
         return q;
       },
-      insert:function(data){
-        return xhrReq('POST',SB_URL+'/rest/v1/'+tbl,data);
+      insert:function(body){
+        return{then:function(ok){
+          sbReq('POST',tbl,'',body,function(e,d){
+            ok({data:d,error:e?{message:e}:null});
+          });
+        }};
       },
-      update:function(data){
-        var q={_filters:[]};
-        q.eq=function(c,v){q._filters.push(c+'=eq.'+encodeURIComponent(v));return q;};
-        q.then=function(ok,err){
-          var url=SB_URL+'/rest/v1/'+tbl+'?'+q._filters.join('&');
-          return xhrReq('PATCH',url,data).then(ok,err);
+      update:function(body){
+        var filters=[];
+        var q={
+          eq:function(c,v){filters.push(c+'=eq.'+encodeURIComponent(v));return q;},
+          then:function(ok){
+            sbReq('PATCH',tbl,filters.join('&'),body,function(e,d){
+              ok({data:d,error:e?{message:e}:null});
+            });
+          }
         };
         return q;
       }
     };
-  },
-  channel:function(){return{on:function(){return this;},subscribe:function(){return this;}};},
-  removeChannel:function(){}
+  }
 };
 
 const DRIVERS={'2222':{nama:'Zakaria',armada:'Hiace 8 Kursi · AB 7845 HH',warna:'bn-zk'},'1111':{nama:'Rahmat Hidayat',armada:'Hiace 9 Kursi · AB 7167 BE',warna:'bn-rh'}};
@@ -496,7 +500,7 @@ function checkPin(){
     document.getElementById('gaji-banner').className='banner '+curDrv.warna;
     today=getToday();document.getElementById('tgl-today').textContent=today;
     /* tanggal setoran otomatis pakai today saat kirim */
-    loadAll().then(function(){setupRT();loadPesananTravel();renderRentalList();});
+    loadAll().then(function(){setupRT();loadPesananTravel();renderRentalList();}).catch(function(e){setSS('error','Offline');T(e.message,'err');});
   }else{
     document.getElementById('pin-err').textContent='PIN salah.';
     pinVal='';updDots();
@@ -509,43 +513,40 @@ function setSS(t,m){var e=document.getElementById('sync-status');if(!e)return;e.
 function fmtRp(n){return'Rp '+(n||0).toLocaleString('id-ID');}
 function T(m,t){var e=document.getElementById('tst');e.textContent=m;e.style.background=t==='err'?'#e74c3c':'#27ae60';e.classList.add('show');setTimeout(function(){e.classList.remove('show');},2400);}
 
-async function loadAll(){
+function loadAll(){
   setSS('syncing','Memuat...');
-  try{
-    var drv=curDrv.nama;
-    var p=await sb.from('pesanan').select('*').eq('driver',drv).order('tgl',{ascending:false});
+  var drv=curDrv.nama;
+  var p1=sb.from('pesanan').select('*').eq('driver',drv).order('tgl',{ascending:false});
+  var p2=sb.from('setoran').select('*').eq('driver',drv).order('created_at',{ascending:false});
+  var p3=sb.from('fee_log').select('*').eq('driver',drv).order('created_at',{ascending:false});
+  var p4=sb.from('gaji_comp').select('*').eq('driver',drv);
+  var p5=sb.from('gaji_rw').select('*').eq('driver',drv).order('created_at',{ascending:false});
+  var p6=sb.from('kasbon').select('*').eq('driver',drv).order('created_at',{ascending:false});
+  return Promise.all([p1,p2,p3,p4,p5,p6]).then(function(res){
+    var p=res[0],s=res[1],f=res[2],gc=res[3],gr=res[4],kb=res[5];
     if(p.error)throw new Error('pesanan: '+p.error.message);
-    var s=await sb.from('setoran').select('*').eq('driver',drv).order('created_at',{ascending:false});
     if(s.error)throw new Error('setoran: '+s.error.message);
-    var f=await sb.from('fee_log').select('*').eq('driver',drv).order('created_at',{ascending:false});
     if(f.error)throw new Error('fee_log: '+f.error.message);
-    var gc=await sb.from('gaji_comp').select('*').eq('driver',drv);
     if(gc.error)throw new Error('gaji_comp: '+gc.error.message);
-    var gr=await sb.from('gaji_rw').select('*').eq('driver',drv).order('created_at',{ascending:false});
     if(gr.error)throw new Error('gaji_rw: '+gr.error.message);
     DB=(p.data||[]).map(r2p);
     SETOR=s.data||[];
     FEE_LOG=f.data||[];
     if(gc.data&&gc.data.length)GAJI_COMP=gc.data[0];
     GAJI_RW=gr.data||[];
-    try{
-      var kb=await sb.from('kasbon').select('*').eq('driver',drv).order('created_at',{ascending:false});
-      KASBON=(kb.data)||[];
-      if(KASBON.length){var ki=KASBON.map(function(x){return parseInt(x.id.replace('KB-',''))||0;});KCTR=Math.max.apply(null,ki)+1;}
-    }catch(ke){KASBON=[];}
+    KASBON=(kb.data)||[];
+    if(KASBON.length){var ki=KASBON.map(function(x){return parseInt(x.id.replace('KB-',''))||0;});KCTR=Math.max.apply(null,ki)+1;}
     if(SETOR.length){var si=SETOR.map(function(x){return parseInt((x.id||'').replace('ST-',''))||0;});SCTR=Math.max.apply(null,si)+1;}
     setSS('ok','Online');renderAll();
-  }catch(e){setSS('error','Offline');T(e.message,'err');console.error(e);}
+  }).catch(function(e){
+    setSS('error','Offline');T(e.message,'err');console.error(e);
+  });
 }
 function r2p(r){return{id:r.id,tipe:r.tipe,nama:r.nama,hp:r.hp,rute:r.rute,driver:r.driver,armStr:r.arm_str,tgl:r.tgl,jadwal:r.jadwal,seats:r.seats||[],pnp:r.pnp||0,bandara:r.bandara,mahasiswa:r.mahasiswa,total:r.total||0,mulai:r.mulai,selesai:r.selesai,hari:r.hari||0,sisa:r.sisa||0,dp:r.dp||0,catatan:r.catatan,status:r.status,mahasiswa_seats:r.mahasiswa_seats||[],luar_sumbar:r.luar_sumbar||false};}
 
 var rtChannel=null;
 function setupRT(){
-  /* Realtime dinonaktifkan sementara - pakai polling manual */
-  /* Refresh data setiap 30 detik */
-  setInterval(function(){
-    if(curDrv)loadAll();
-  },30000);
+  /* Auto refresh dimatikan - data update saat kirim/terima aksi */
 }
 
 /* ── STATUS — update semua pesanan dalam grup ── */
@@ -945,7 +946,9 @@ async function kirimSetorRental(){
   var s={id,driver:curDrv.nama,tgl,tipe_setoran:'rental',pesanan_ids:[selRtPes],pesanan_detail:[{id:p.id,rute:p.rute,hari:p.hari,total:p.total,luar_sumbar:p.luar_sumbar}],jumlah:bersih,jumlah_kotor:jml,total_biaya:totBiaya,biaya_detail:biayaV,keterangan:ket||'Setoran rental '+p.id,status:'Menunggu'};
   var{error}=await sb.from('setoran').insert(s);
   if(error){T('Gagal: '+error.message,'err');return;}
-  for(var i=0;i<biayaV.length;i++){await sb.from('biaya').insert({id:'BY-'+Date.now()+'-'+i,kategori:'Biaya Perjalanan',tgl,nama:biayaV[i].nama+' ('+curDrv.nama+')',jumlah:biayaV[i].jumlah});}
+  for(var i=0;i<biayaV.length;i++){
+    await sb.from('biaya').insert({id:'BY-'+Date.now()+'-'+i,kategori:'Biaya Perjalanan',tgl,nama:biayaV[i].nama+' ('+curDrv.nama+')',jumlah:biayaV[i].jumlah});
+  }
   SETOR.unshift(s);selRtPes=null;rtBiayaRows=[];
   document.getElementById('srt-jml').value='';document.getElementById('srt-ket').value='';document.getElementById('srt-form-detail').style.display='none';document.getElementById('srt-preview').style.display='none';
   setSS('ok','Online');T('Setoran rental '+fmtRp(bersih)+' terkirim!');renderRentalList();mkBiayaRow('rt-biaya-list',rtBiayaRows,hitSetorRental);renderAll();
