@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>HAMCO TRANS — APK Driver</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase via REST API langsung -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--pr:#1a3a5c;--ac:#e8a020;--bg:#f4f6fa;--cd:#fff;--tx:#1a2233;--mt:#6b7a99;--bd:rgba(26,58,92,0.12);--sc:#27ae60;--dn:#e74c3c;--warn:#f39c12}
@@ -355,8 +355,67 @@ select.fi{appearance:none}
 
 <script>
 const SB_URL='https://mzezxeomggazvrpuwpgu.supabase.co';
-const SB_KEY='sb_publishable_fBI3n7VG_4cqJIGMvcphww_IAzX8lxh';
-const sb=supabase.createClient(SB_URL,SB_KEY);
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16ZXp4ZW9tZ2dhenZycHV3cGd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTQ2NTgsImV4cCI6MjA5NTczMDY1OH0.OMspKZMPkbH4W6KqjtMX0n_POsKcvySopvLGeDC38Lg';
+const SB_HDR={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+
+/* Supabase REST helper via XMLHttpRequest */
+function xhrReq(method,url,body){
+  return new Promise(function(resolve,reject){
+    var x=new XMLHttpRequest();
+    x.open(method,url,true);
+    x.setRequestHeader('apikey',SB_KEY);
+    x.setRequestHeader('Authorization','Bearer '+SB_KEY);
+    x.setRequestHeader('Content-Type','application/json');
+    x.setRequestHeader('X-Client-Info','supabase-js/2.0.0');
+    if(method==='POST'||method==='PATCH')x.setRequestHeader('Prefer','return=minimal');
+    x.withCredentials=false;
+    x.onload=function(){
+      try{
+        var d=x.status===204?null:JSON.parse(x.responseText);
+        if(x.status>=200&&x.status<300)resolve({data:d,error:null});
+        else resolve({data:null,error:{message:(d&&d.message)||x.responseText}});
+      }catch(e){resolve({data:null,error:{message:x.responseText}});}
+    };
+    x.onerror=function(){reject(new Error('NetworkError: '+url));};
+    x.ontimeout=function(){reject(new Error('Timeout: '+url));};
+    x.timeout=15000;
+    x.send(body?JSON.stringify(body):null);
+  });
+}
+
+var sb={
+  from:function(tbl){
+    return{
+      select:function(col){
+        var q={_tbl:tbl,_col:col,_filters:[],_order:null};
+        q.eq=function(c,v){q._filters.push(c+'=eq.'+encodeURIComponent(v));return q;};
+        q.order=function(c,opt){q._order=c+'.'+(opt&&opt.ascending?'asc':'desc');return q;};
+        q.limit=function(n){return q;};
+        q.then=function(ok,err){
+          var url=SB_URL+'/rest/v1/'+tbl+'?select='+col;
+          q._filters.forEach(function(f){url+='&'+f;});
+          if(q._order)url+='&order='+q._order;
+          return xhrReq('GET',url,null).then(ok,err);
+        };
+        return q;
+      },
+      insert:function(data){
+        return xhrReq('POST',SB_URL+'/rest/v1/'+tbl,data);
+      },
+      update:function(data){
+        var q={_filters:[]};
+        q.eq=function(c,v){q._filters.push(c+'=eq.'+encodeURIComponent(v));return q;};
+        q.then=function(ok,err){
+          var url=SB_URL+'/rest/v1/'+tbl+'?'+q._filters.join('&');
+          return xhrReq('PATCH',url,data).then(ok,err);
+        };
+        return q;
+      }
+    };
+  },
+  channel:function(){return{on:function(){return this;},subscribe:function(){return this;}};},
+  removeChannel:function(){}
+};
 
 const DRIVERS={'2222':{nama:'Zakaria',armada:'Hiace 8 Kursi · AB 7845 HH',warna:'bn-zk'},'1111':{nama:'Rahmat Hidayat',armada:'Hiace 9 Kursi · AB 7167 BE',warna:'bn-rh'}};
 var curDrv=null,pinVal='';
@@ -474,10 +533,7 @@ async function loadAll(){
       KASBON=(kb.data)||[];
       if(KASBON.length){var ki=KASBON.map(function(x){return parseInt(x.id.replace('KB-',''))||0;});KCTR=Math.max.apply(null,ki)+1;}
     }catch(ke){KASBON=[];}
-    if(SETOR.length){
-      var si=SETOR.map(function(x){return parseInt((x.id||'').replace('ST-',''))||0;});
-      SCTR=Math.max.apply(null,si)+1;
-    }
+    if(SETOR.length){var si=SETOR.map(function(x){return parseInt((x.id||'').replace('ST-',''))||0;});SCTR=Math.max.apply(null,si)+1;}
     setSS('ok','Online');renderAll();
   }catch(e){setSS('error','Offline');T(e.message,'err');console.error(e);}
 }
