@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>HAMCO TRANS — APK Utama</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--pr:#1a3a5c;--ac:#e8a020;--bg:#f4f6fa;--cd:#fff;--tx:#1a2233;--mt:#6b7a99;--bd:rgba(26,58,92,0.12);--sc:#27ae60;--dn:#e74c3c;--warn:#f39c12}
@@ -243,6 +243,7 @@ select.fi{appearance:none}
     <div><div style="font-size:13px;font-weight:600">HAMCO TRANS</div>
     <div style="display:flex;align-items:center;gap:5px"><div style="font-size:9px;opacity:.6">Manajemen</div><span id="sync-status" class="sync-badge syncing"><i class="ti ti-cloud-upload" style="font-size:10px"></i>Menghubungkan...</span></div></div>
   </div>
+  <button onclick="loadAll()" style="background:rgba(255,255,255,.1);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer" title="Refresh"><i class="ti ti-refresh" style="font-size:13px;color:#fff"></i></button>
   <button onclick="logout()" style="background:rgba(255,255,255,.1);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer"><i class="ti ti-logout" style="font-size:13px;color:#fff"></i></button>
 </div>
 <div class="session-bar" id="session-bar" style="display:none">
@@ -691,7 +692,95 @@ select.fi{appearance:none}
 <script>
 const SB_URL='https://mzezxeomggazvrpuwpgu.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16ZXp4ZW9tZ2dhenZycHV3cGd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTQ2NTgsImV4cCI6MjA5NTczMDY1OH0.OMspKZMPkbH4W6KqjtMX0n_POsKcvySopvLGeDC38Lg';
-const sb=supabase.createClient(SB_URL,SB_KEY);
+
+function sbReq(method,table,params,body,cb){
+  var xhr=new XMLHttpRequest();
+  var url=SB_URL+'/rest/v1/'+table+(params?'?'+params:'');
+  xhr.open(method,url,true);
+  xhr.setRequestHeader('apikey',SB_KEY);
+  xhr.setRequestHeader('Authorization','Bearer '+SB_KEY);
+  xhr.setRequestHeader('Accept','application/json');
+  xhr.setRequestHeader('Content-Type','application/json');
+  if(method==='POST'||method==='PATCH')xhr.setRequestHeader('Prefer','return=minimal');
+  xhr.timeout=20000;
+  xhr.onload=function(){
+    try{
+      var d=xhr.status===204?[]:JSON.parse(xhr.responseText);
+      if(xhr.status>=200&&xhr.status<300)cb(null,Array.isArray(d)?d:[d]);
+      else cb((d&&d.message)||xhr.responseText,null);
+    }catch(e){cb(xhr.responseText,null);}
+  };
+  xhr.onerror=function(){cb('NetworkError',null);};
+  xhr.ontimeout=function(){cb('Timeout',null);};
+  xhr.send(body?JSON.stringify(body):null);
+}
+
+var sb={
+  from:function(tbl){
+    return{
+      select:function(){
+        var filters=[],ord='';
+        var q={
+          eq:function(c,v){filters.push(c+'=eq.'+encodeURIComponent(v));return q;},
+          order:function(c,opt){ord='order='+c+'.'+(opt&&opt.ascending?'asc':'desc');return q;},
+          limit:function(){return q;},
+          then:function(ok){
+            var p=filters.join('&')+(ord?'&'+ord:'');
+            sbReq('GET',tbl,p,null,function(e,d){
+              ok({data:d,error:e?{message:e}:null});
+            });
+          }
+        };
+        return q;
+      },
+      insert:function(body){
+        return{then:function(ok){
+          sbReq('POST',tbl,'',body,function(e,d){
+            ok({data:d,error:e?{message:e}:null});
+          });
+        }};
+      },
+      upsert:function(body){
+        return{then:function(ok){
+          var xhr2=new XMLHttpRequest();
+          var url2=SB_URL+'/rest/v1/'+tbl;
+          xhr2.open('POST',url2,true);
+          xhr2.setRequestHeader('apikey',SB_KEY);
+          xhr2.setRequestHeader('Authorization','Bearer '+SB_KEY);
+          xhr2.setRequestHeader('Content-Type','application/json');
+          xhr2.setRequestHeader('Prefer','resolution=merge-duplicates,return=minimal');
+          xhr2.onload=function(){ok({error:xhr2.status>=400?{message:xhr2.responseText}:null});};
+          xhr2.onerror=function(){ok({error:{message:'NetworkError'}});};
+          xhr2.send(JSON.stringify(body));
+        }};
+      },
+      delete:function(){
+        var filters2=[];
+        var q={
+          eq:function(c,v){filters2.push(c+'=eq.'+encodeURIComponent(v));return q;},
+          then:function(ok){
+            sbReq('DELETE',tbl,filters2.join('&'),null,function(e,d){
+              ok({data:d,error:e?{message:e}:null});
+            });
+          }
+        };
+        return q;
+      },
+      update:function(body){
+        var filters=[];
+        var q={
+          eq:function(c,v){filters.push(c+'=eq.'+encodeURIComponent(v));return q;},
+          then:function(ok){
+            sbReq('PATCH',tbl,filters.join('&'),body,function(e,d){
+              ok({data:d,error:e?{message:e}:null});
+            });
+          }
+        };
+        return q;
+      }
+    };
+  }
+};
 var DB=[],SETOR=[],BIAYA=[],LOGS=[],GAJI_RW=[],FEE_LOG=[],LOCKS2=[],KASBON_ALL=[];
 var KCTR=1;
 var GAJI_COMP={'Zakaria':{pokok:3000000,potongan:0,dibayar:0},'Rahmat Hidayat':{pokok:3000000,potongan:0,dibayar:0}};
@@ -700,7 +789,8 @@ var CTR=1,SCTR=1,BCTR=1,GCTR=1,FCTR=1;
 var fBdr=false,fMhs=false,fStat='',curN=8,curTarif=110000,curRute='Lubuk Sikaping - Padang',selS=[],eSel=[];
 var curPeriod='bulan',logFilter='semua',lapLocked=false,PIN='1234',pinVal='';
 var curArm=1,curKat='semua';
-var today=new Date().toISOString().slice(0,10);
+function getToday(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+var today=getToday();
 var FEE_TV=5000,FEE_RT=100000,FEE_RT_LUAR=200000,DIS_MHS=10000;
 var fLSB=false;
 function tgLSB(){fLSB=!fLSB;document.getElementById('tg-lsb').className='tgl-btn'+(fLSB?' on':'');hitR();}
@@ -728,62 +818,83 @@ var BCAT_ICO={'BBM':'ti-droplet','Servis / Perawatan':'ti-tool','Gaji Driver':'t
 
 /* ── SUPABASE ── */
 function setSS(t,m){var e=document.getElementById('sync-status');if(!e)return;e.className='sync-badge '+t;var i=t==='ok'?'ti-cloud-check':t==='syncing'?'ti-cloud-upload':'ti-cloud-x';e.innerHTML='<i class="ti '+i+'" style="font-size:10px"></i>'+m;}
-async function loadAll(){
+function loadAll(onDone){
   setSS('syncing','Memuat...');
-  try{
-    var[p,s,b,f,gc,gr,lg,srv,kb]=await Promise.all([
-      sb.from('pesanan').select('*').order('created_at',{ascending:false}),
-      sb.from('setoran').select('*').order('created_at',{ascending:false}),
-      sb.from('biaya').select('*').order('created_at',{ascending:false}),
-      sb.from('fee_log').select('*').order('created_at',{ascending:false}),
-      sb.from('gaji_comp').select('*'),
-      sb.from('gaji_rw').select('*').order('created_at',{ascending:false}),
-      sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(50),
-      sb.from('servis_state').select('*')
-    ]);
-    DB=(p.data||[]).map(r2p);SETOR=s.data||[];BIAYA=b.data||[];FEE_LOG=f.data||[];
-    if(gc.data)gc.data.forEach(function(r){GAJI_COMP[r.driver]={pokok:r.pokok,potongan:r.potongan,bpjs:r.bpjs||0,angsuran:r.angsuran||0,dibayar:r.dibayar};});
-    GAJI_RW=gr.data||[];
-    LOGS=(lg.data||[]).map(function(l){return{tipe:l.tipe,aksi:l.aksi,det:l.detail,color:l.color,waktu:l.waktu};});
-    /* Load kasbon terpisah - aman jika tabel belum ada */
-    try{
-      var kb=await sb.from('kasbon').select('*').order('created_at',{ascending:false});
-      KASBON_ALL=kb.data||[];
-      if(KASBON_ALL.length){var ki=KASBON_ALL.map(function(x){return parseInt(x.id.replace('KB-',''))||0;});KCTR=Math.max.apply(null,ki)+1;}
-    }catch(ke){KASBON_ALL=[];}
-    if(srv.data)srv.data.forEach(function(r){
-      SRV_ST[r.armada].kmSaved=r.km_saved||0;SRV_ST[r.armada].kmTime=r.km_time||'';
-      SRV_ST[r.armada].riwayat=r.riwayat||{};SRV_ST[r.armada].nextKm=r.next_km||{};
-      SRV_MASTER.forEach(function(m){if(SRV_ST[r.armada].nextKm[m.id]===undefined)SRV_ST[r.armada].nextKm[m.id]=null;});
+  var results={};
+  var tables=['pesanan','setoran','biaya','fee_log','gaji_comp','gaji_rw','activity_log','servis_state','kasbon'];
+  var queries=[
+    {t:'pesanan',p:'order=tgl.desc'},
+    {t:'setoran',p:'order=created_at.desc'},
+    {t:'biaya',p:'order=created_at.desc'},
+    {t:'fee_log',p:'order=created_at.desc'},
+    {t:'gaji_comp',p:''},
+    {t:'gaji_rw',p:'order=created_at.desc'},
+    {t:'activity_log',p:'order=created_at.desc&limit=50'},
+    {t:'servis_state',p:''},
+    {t:'kasbon',p:'order=created_at.desc'}
+  ];
+  var idx=0;
+  function next(){
+    if(idx>=queries.length){
+      /* Semua query selesai - proses data */
+      try{
+        DB=(results['pesanan']||[]).map(r2p);
+        SETOR=results['setoran']||[];
+        BIAYA=results['biaya']||[];
+        FEE_LOG=results['fee_log']||[];
+        var gc=results['gaji_comp']||[];
+        gc.forEach(function(r){GAJI_COMP[r.driver]={pokok:r.pokok,potongan:r.potongan,bpjs:r.bpjs||0,angsuran:r.angsuran||0,dibayar:r.dibayar};});
+        GAJI_RW=results['gaji_rw']||[];
+        LOGS=(results['activity_log']||[]).map(function(l){return{tipe:l.tipe,aksi:l.aksi,det:l.detail,color:l.color,waktu:l.waktu};});
+        var srv=results['servis_state']||[];
+        srv.forEach(function(r){var arm=r.armada;if(!SRV_ST[arm])SRV_ST[arm]={kmSaved:0,kmTime:'',nextKm:{},riwayat:{}};SRV_ST[arm].kmSaved=r.km_saved||0;SRV_ST[arm].kmTime=r.km_time||'';SRV_ST[arm].nextKm=r.next_km||{};SRV_ST[arm].riwayat=r.riwayat||{};});
+        KASBON_ALL=results['kasbon']||[];
+        if(KASBON_ALL.length){var ki=KASBON_ALL.map(function(x){return parseInt(x.id.replace('KB-',''))||0;});KCTR=Math.max.apply(null,ki)+1;}
+        if(SETOR.length){var si=SETOR.map(function(x){return parseInt((x.id||'').replace('ST-',''))||0;}).filter(function(x){return!isNaN(x);});if(si.length)SCTR=Math.max.apply(null,si)+1;}
+        if(BIAYA.length){var bi=BIAYA.map(function(x){return parseInt((x.id||'').replace('BY-',''))||0;}).filter(function(x){return!isNaN(x);});if(bi.length)BCTR=Math.max.apply(null,bi)+1;}
+        /* ID pesanan: HT-DDMMYY-001, reset tiap hari */
+        var tglId=today.slice(8,10)+today.slice(5,7)+today.slice(2,4);
+        var todayPes=DB.filter(function(x){return(x.id||'').startsWith('HT-'+tglId);});
+        if(todayPes.length){
+          var nums=todayPes.map(function(x){return parseInt((x.id||'').split('-')[2])||0;});
+          CTR=Math.max.apply(null,nums)+1;
+        }else{CTR=1;}
+        setSS('ok','Online');renderAll();
+        if(onDone)onDone();
+      }catch(e){setSS('error','Offline');T(e.message,'err');console.error(e);}
+      return;
+    }
+    var q=queries[idx++];
+    sbReq('GET',q.t,q.p,null,function(e,d){
+      if(e&&q.t!=='kasbon'){setSS('error','Offline');T(q.t+': '+e,'err');return;}
+      results[q.t]=d||[];
+      next();
     });
-    if(DB.length){var ids=DB.map(function(x){return parseInt(x.id.replace('HT-',''))||0;});CTR=Math.max.apply(null,ids)+1;}
-    if(SETOR.length){var si=SETOR.map(function(x){return parseInt(x.id.replace('ST-',''))||0;});SCTR=Math.max.apply(null,si)+1;}
-    if(BIAYA.length){var bi=BIAYA.map(function(x){return parseInt((x.id||'').replace('BY-',''))||0;});BCTR=Math.max.apply(null,bi)+1;}
-    setSS('ok','Online');renderAll();
-  }catch(e){setSS('error','Offline - cek internet');console.error(e);}
+  }
+  next();
 }
 function r2p(r){return{id:r.id,tipe:r.tipe,nama:r.nama,hp:r.hp,rute:r.rute,driver:r.driver,armStr:r.arm_str,armadaN:r.armada_n,tgl:r.tgl,jadwal:r.jadwal,seats:r.seats||[],pnp:r.pnp||0,bandara:r.bandara,mahasiswa:r.mahasiswa,diskon:r.diskon||0,total:r.total||0,tarif:r.tarif||0,mulai:r.mulai,selesai:r.selesai,tipe_rental:r.tipe_rental,harga:r.harga||0,hari:r.hari||0,sewa:r.sewa||0,minyak:r.minyak||0,dp:r.dp||0,sisa:r.sisa||0,luar_sumbar:r.luar_sumbar||false,catatan:r.catatan,status:r.status,histori:r.histori||[]};}
 function p2r(p){return{id:p.id,tipe:p.tipe,nama:p.nama,hp:p.hp,rute:p.rute,driver:p.driver,arm_str:p.armStr,armada_n:p.armadaN,tgl:p.tgl,jadwal:p.jadwal,seats:p.seats,pnp:p.pnp,bandara:p.bandara,mahasiswa:p.mahasiswa,diskon:p.diskon,total:p.total,tarif:p.tarif,mulai:p.mulai,selesai:p.selesai,tipe_rental:p.tipe_rental,harga:p.harga,hari:p.hari,sewa:p.sewa||0,minyak:p.minyak||0,dp:p.dp,sisa:p.sisa,luar_sumbar:p.luar_sumbar||false,catatan:p.catatan,status:p.status,histori:p.histori};}
-async function svP(p){await sb.from('pesanan').upsert(p2r(p));setSS('ok','Tersimpan');}
-async function svS(s){await sb.from('setoran').upsert(s);}
-async function svB(b){await sb.from('biaya').upsert(b);}
-async function svF(f){await sb.from('fee_log').upsert(f);}
-async function svGC(drv){var c=GAJI_COMP[drv];await sb.from('gaji_comp').upsert({driver:drv,pokok:c.pokok,potongan:c.potongan,bpjs:c.bpjs||0,angsuran:c.angsuran||0,dibayar:c.dibayar||0});}
-async function svGR(g){await sb.from('gaji_rw').upsert(g);}
-async function svLog(l){await sb.from('activity_log').insert({tipe:l.tipe,aksi:l.aksi,detail:l.det,color:l.color,waktu:l.waktu});}
-async function svSrv(arm){var s=SRV_ST[arm];await sb.from('servis_state').upsert({armada:arm,km_saved:s.kmSaved,km_time:s.kmTime,riwayat:s.riwayat,next_km:s.nextKm,updated_at:new Date().toISOString()});}
+function svP(p){sb.from('pesanan').upsert(p2r(p)).then(function(){setSS('ok','Tersimpan');});}
+function svS(s){sb.from('setoran').upsert(s).then(function(){});}
+function svB(b){sb.from('biaya').upsert(b).then(function(){});}
+function svF(f){sb.from('fee_log').upsert(f).then(function(){});}
+function svGC(drv){var c=GAJI_COMP[drv];sb.from('gaji_comp').upsert({driver:drv,pokok:c.pokok,potongan:c.potongan,bpjs:c.bpjs||0,angsuran:c.angsuran||0,dibayar:c.dibayar||0}).then(function(){});}
+function svGR(g){sb.from('gaji_rw').upsert(g).then(function(){});}
+function svLog(l){sb.from('activity_log').insert({tipe:l.tipe,aksi:l.aksi,detail:l.det,color:l.color,waktu:l.waktu}).then(function(){});}
+function svSrv(arm){var s=SRV_ST[arm];sb.from('servis_state').upsert({armada:arm,km_saved:s.kmSaved,km_time:s.kmTime,riwayat:s.riwayat,next_km:s.nextKm,updated_at:new Date().toLocaleString('sv-SE')}).then(function(){});}
 function setupRT(){
   /* Realtime + polling 15 detik */
   try{
     sb.channel('hamco').on('postgres_changes',{event:'*',schema:'public',table:'setoran'},function(){loadAll();}).on('postgres_changes',{event:'*',schema:'public',table:'pesanan'},function(){loadAll();}).subscribe();
   }catch(e){}
-  setInterval(function(){if(document.visibilityState!=='hidden')loadAll();},15000);
+  setInterval(function(){if(document.visibilityState!=='hidden')loadAll();},30000);
 }
 
 /* ── HELPERS ── */
 function fmtRp(n){return'Rp '+(n||0).toLocaleString('id-ID');}
 function drvN(n){return n===8?'Zakaria':'Rahmat Hidayat';}
-function getTglR(p){if(p.tipe!=='rental'||!p.mulai||!p.selesai)return[];var l=[],c=new Date(p.mulai),e=new Date(p.selesai);while(c<=e){l.push(c.toISOString().slice(0,10));c.setDate(c.getDate()+1);}return l;}
+function getTglR(p){if(p.tipe!=='rental'||!p.mulai||!p.selesai)return[];var l=[],c=new Date(p.mulai),e=new Date(p.selesai);while(c<=e){l.push(c.getFullYear()+'-'+String(c.getMonth()+1).padStart(2,'0')+'-'+String(c.getDate()).padStart(2,'0'));c.setDate(c.getDate()+1);}return l;}
 function getTgl(p){return p.tipe==='rental'?getTglR(p):p.tgl?[p.tgl]:[];}
 function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function T(m,t){var e=document.getElementById('tst');e.textContent=m;e.style.background=t==='err'?'#e74c3c':'#27ae60';e.classList.add('show');setTimeout(function(){e.classList.remove('show');},2400);}
@@ -793,7 +904,7 @@ async function addLog(tipe,aksi,det,color){var l={tipe,aksi,det,color:color||'#6
 function pinI(d){if(pinVal.length>=4)return;pinVal+=d;updDots();if(pinVal.length===4)setTimeout(checkPin,200);}
 function pinD(){pinVal=pinVal.slice(0,-1);updDots();}
 function updDots(){for(var i=0;i<4;i++)document.getElementById('d'+i).className='pin-dot'+(i<pinVal.length?' filled':'');}
-function checkPin(){if(pinVal===PIN){document.getElementById('pin-screen').classList.add('h');addLog('sistem','Login berhasil','','#27ae60');loadAll().then(function(){setupRT();startSession();});}else{document.getElementById('pin-err').textContent='PIN salah.';pinVal='';updDots();setTimeout(function(){document.getElementById('pin-err').textContent='';},2000);}}
+function checkPin(){if(pinVal===PIN){document.getElementById('pin-screen').classList.add('h');addLog('sistem','Login berhasil','','#27ae60');loadAll(function(){setupRT();startSession();});}else{document.getElementById('pin-err').textContent='PIN salah.';pinVal='';updDots();setTimeout(function(){document.getElementById('pin-err').textContent='';},2000);}}
 var sessionTimer=null;
 function resetTimer(){
   if(sessionTimer)clearTimeout(sessionTimer);
@@ -857,7 +968,7 @@ function cekKonflikR(){
   var box=document.getElementById('conflict-box-r'),btn=document.getElementById('btn-simpan-r');
   if(!mul){box.className='conflict-box';btn.disabled=false;btn.style.opacity='1';return;}
   var e=sel||mul,c=new Date(mul),end=new Date(e),tl=[];
-  while(c<=end){tl.push(c.toISOString().slice(0,10));c.setDate(c.getDate()+1);}
+  while(c<=end){tl.push(c.getFullYear()+'-'+String(c.getMonth()+1).padStart(2,'0')+'-'+String(c.getDate()).padStart(2,'0'));c.setDate(c.getDate()+1);}
   /* Hanya blokir jika ada pesanan AKTIF (Menunggu/Jalan) — yang sudah Selesai tidak dihitung */
   var k=DB.filter(function(p){
     return (p.status==='Menunggu'||p.status==='Jalan')&&
@@ -888,9 +999,8 @@ function getBk(rute,armN,skip){
   var tgl=document.getElementById('f-tgl')?document.getElementById('f-tgl').value:'';
   var r=[];
   DB.forEach(function(p){
-    if(p.id===skip||p.status==='Batal'||p.tipe==='rental')return;
+    if(p.id===skip||p.status==='Batal'||p.status==='Selesai'||p.tipe==='rental')return;
     if(p.armadaN===armN&&p.seats){
-      /* Hanya blokir kursi di tanggal & rute yang sama */
       if(tgl&&p.tgl===tgl&&p.rute===rute){
         p.seats.forEach(function(s){r.push(s);});
       }
@@ -957,7 +1067,8 @@ async function simpan(){
   var jadwal=(dir==='lp'||dir==='pl')?document.getElementById('f-jadwal').value:'';
   var x=fBdr?20000:0,dis=fMhs?DIS_MHS*selS.length:0,tarif=curTarif+x-(fMhs?DIS_MHS:0),tot=tarif*selS.length;
   var drv=curN===8?'Zakaria':'Rahmat Hidayat',armStr=curN===8?'Hiace 8 · AB 7845 HH':'Hiace 9 · AB 7167 BE';
-  var id='HT-'+String(CTR++).padStart(3,'0');
+  var tglId=today.slice(8,10)+today.slice(5,7)+today.slice(2,4);
+  var id='HT-'+tglId+'-'+String(CTR++).padStart(3,'0');
   var obj={id,tipe:'travel',nama,hp:document.getElementById('f-hp').value.trim(),rute:curRute,driver:drv,armStr,armadaN:curN,tgl,jadwal,seats:selS.slice(),pnp:selS.length,bandara:fBdr,mahasiswa:fMhs,diskon:dis,total:tot,tarif:curTarif,catatan:document.getElementById('f-cat').value.trim(),status:'Menunggu',histori:[{waktu:new Date().toLocaleString('id-ID'),aksi:'Dibuat',tarif:tot}]};
   setSS('syncing','Menyimpan...');DB.unshift(obj);await svP(obj);await addLog('pesanan','Pesanan baru '+id,nama,'#2980b9');
   selS=[];['f-nama','f-hp','f-tgl','f-cat'].forEach(function(x){document.getElementById(x).value='';});
@@ -976,7 +1087,8 @@ async function simpanR(){
   var sisa=Math.max(0,total-dp);
   var drv=document.getElementById('r-arm').value;
   var armStr=drv==='Zakaria'?'Hiace 8 · AB 7845 HH':'Hiace 9 · AB 7167 BE';
-  var id='HT-'+String(CTR++).padStart(3,'0');
+  var tglId2=today.slice(8,10)+today.slice(5,7)+today.slice(2,4);
+  var id='HT-'+tglId2+'-'+String(CTR++).padStart(3,'0');
   var ruteRental=document.getElementById('r-rute').value.trim()||('Rental Hiace '+(drv==='Zakaria'?'8':'9'))+(fLSB?' (Luar Sumbar)':'');
   var obj={id,tipe:'rental',nama,hp:document.getElementById('r-hp').value.trim(),rute:ruteRental,driver:drv,armStr,tgl:mul,mulai:mul,selesai:sel,harga:h,hari,sewa,minyak,total,dp,sisa,luar_sumbar:fLSB,catatan:document.getElementById('r-cat').value.trim(),status:'Menunggu',histori:[{waktu:new Date().toLocaleString('id-ID'),aksi:'Dibuat',tarif:total}]};
   setSS('syncing','Menyimpan...');DB.unshift(obj);await svP(obj);await addLog('pesanan','Rental baru '+id,nama,'#27ae60');
@@ -1016,7 +1128,7 @@ function getFee(drv){return FEE_LOG.filter(function(f){return f.driver===drv;}).
 function getFeeDetail(drv){return FEE_LOG.filter(function(f){return f.driver===drv;});}
 async function konfirmSetor(id){
   var s=SETOR.find(function(x){return x.id===id;});if(!s)return;
-  s.status='Dikonfirmasi';setSS('syncing','Mengonfirmasi...');await svS(s);
+  s.status='Dikonfirmasi';setSS('syncing','Mengonfirmasi...');svS(s);
   var fee=await hitungFee(id);
   await addLog('setoran','Setoran dikonfirmasi '+id,s.driver+' · '+fmtRp(s.jumlah)+(fee?' + Fee '+fmtRp(fee):''),'#27ae60');
   renderAll();if(fee>0)T(id+' dikonfirmasi! Fee +'+fmtRp(fee));else T(id+' dikonfirmasi!');
@@ -1040,10 +1152,15 @@ async function simpanBiaya(){
   BIAYA.unshift(b);await svB(b);document.getElementById('b-nama').value='';document.getElementById('b-jml').value='';
   await addLog('biaya','Pengeluaran',nama+' · '+fmtRp(jml),'#e74c3c');renderAll();T('Pengeluaran disimpan!');
 }
-async function hapusBiaya(id){if(lapLocked){T('Laporan terkunci','err');return;}BIAYA=BIAYA.filter(function(b){return b.id!==id;});await sb.from('biaya').delete().eq('id',id);renderAll();T('Dihapus');}
+function hapusBiaya(id){
+  if(lapLocked){T('Laporan terkunci','err');return;}
+  BIAYA=BIAYA.filter(function(b){return b.id!==id;});
+  sbReq('DELETE','biaya','id=eq.'+encodeURIComponent(id),null,function(){});
+  renderAll();T('Dihapus');
+}
 
 /* ── STATUS PESANAN ── */
-async function setStatus(id,ns){var p=DB.find(function(x){return x.id===id;});if(p){p.status=ns;await svP(p);await addLog('pesanan','Status '+p.id+' -> '+ns,p.nama,'#27ae60');renderAll();T('Status -> '+ns);}}
+async function setStatus(id,ns){var p=DB.find(function(x){return x.id===id;});if(p){p.status=ns;await svP(p);await addLog('pesanan','Status '+p.id+' -> '+ns,p.nama,'#27ae60');renderAll();T('Status -> '+ns);setTimeout(function(){loadAll();},1000);}}
 function setFS(s,el){fStat=s;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});el.classList.add('active');renderP();}
 
 /* ── GAJI ── */
@@ -1093,8 +1210,7 @@ async function simpanKasbon(){
   setSS('syncing','Menyimpan...');
   var id='KB-'+String(KCTR++).padStart(3,'0');
   var k={id,driver:drv,jumlah:jml,keterangan:ket,tgl:today,status:'Dicairkan'};
-  var{error}=await sb.from('kasbon').insert(k);
-  if(error){T('Gagal: '+error.message,'err');setSS('error','Gagal');return;}
+  sb.from('kasbon').insert(k).then(function(r){if(r&&r.error){T('Gagal: '+r.error.message,'err');setSS('error','Gagal');}});
   KASBON_ALL.unshift(k);
   /* Catat sebagai pengeluaran otomatis */
   var b={id:'BY-'+String(BCTR++).padStart(3,'0'),kategori:'Gaji Driver',tgl:today,nama:'Kasbon '+drv+' - '+ket,jumlah:jml};
@@ -1166,10 +1282,34 @@ function renderGaji(){
     if(sisa===0&&c.dibayar>0){badge.textContent='Lunas';badge.className='gaji-badge g-lunas';}
     else if(c.dibayar>0&&sisa>0){badge.textContent='Sebagian';badge.className='gaji-badge g-sebagian';}
     else{badge.textContent='Belum Dibayar';badge.className='gaji-badge g-belum';}
-    var fi=getFeeDetail(drv);
+    var fi=getFeeDetail(drv).filter(function(f){return(f.tgl||'').startsWith(bln);});
+    var fiTv=fi.filter(function(f){return f.tipe==='travel';});
+    var fiRt=fi.filter(function(f){return f.tipe==='rental';});
+    var tvPnp=fiTv.reduce(function(s,f){var m=(f.detail||'').match(/(\d+) pnp/);return s+(m?parseInt(m[1]):0);},0);
+    var rtHari=fiRt.reduce(function(s,f){var m=(f.detail||'').match(/(\d+) hari/);return s+(m?parseInt(m[1]):0);},0);
     var fe=document.getElementById('fee-detail-'+pfx);
-    if(fi.length){fe.innerHTML='<div class="fee-box"><div class="fee-title">Rincian Fee (dari setoran dikonfirmasi)</div>'+fi.map(function(f){return'<div class="fee-item"><span style="color:var(--mt);font-size:9px">'+f.detail+'</span><span style="font-weight:700;color:#1e7e44">'+fmtRp(f.jumlah)+'</span></div>';}).join('')+'<div class="fee-total"><span>Total Fee</span><span>'+fmtRp(fee)+'</span></div></div>';}
-    else{fe.innerHTML='<div style="font-size:10px;color:var(--mt);padding:5px 0">Fee muncul otomatis saat setoran dikonfirmasi.</div>';}
+    if(!fi.length){fe.innerHTML='<div style="font-size:10px;color:var(--mt);padding:5px 0">Fee muncul otomatis saat setoran dikonfirmasi.</div>';}
+    else{
+      var tvH=fiTv.length?'<div style="background:#eaf4fb;border-radius:7px;padding:7px 9px;margin-bottom:5px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var e=document.getElementById(\'fd-tv-'+pfx+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">'+
+          '<div><span style="background:#1a6fa0;color:#fff;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700">TRAVEL</span>'+
+          '<div style="font-size:11px;font-weight:600;margin-top:2px">'+tvPnp+' penumpang · '+fiTv.length+' setoran</div></div>'+
+          '<div style="text-align:right"><div style="font-size:13px;font-weight:700;color:#1a6fa0">'+fmtRp(fiTv.reduce(function(s,f){return s+f.jumlah;},0))+'</div><div style="font-size:9px;color:#1a6fa0">▼</div></div>'+
+        '</div>'+
+        '<div id="fd-tv-'+pfx+'" style="display:none;margin-top:5px;border-top:.5px solid #b5d4f4;padding-top:5px">'+
+          fiTv.map(function(f){var m=(f.detail||'').match(/(\d+) pnp/);return'<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;border-bottom:.5px dashed #d0e8f8"><span style="color:var(--mt)">'+f.tgl+' · '+(m?m[1]:0)+' pnp</span><span style="font-weight:600;color:#1a6fa0">'+fmtRp(f.jumlah)+'</span></div>';}).join('')+
+        '</div></div>':'';
+      var rtH=fiRt.length?'<div style="background:#eafaf1;border-radius:7px;padding:7px 9px;margin-bottom:5px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var e=document.getElementById(\'fd-rt-'+pfx+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">'+
+          '<div><span style="background:#1e7e44;color:#fff;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700">RENTAL</span>'+
+          '<div style="font-size:11px;font-weight:600;margin-top:2px">'+rtHari+' hari · '+fiRt.length+' trip</div></div>'+
+          '<div style="text-align:right"><div style="font-size:13px;font-weight:700;color:#1e7e44">'+fmtRp(fiRt.reduce(function(s,f){return s+f.jumlah;},0))+'</div><div style="font-size:9px;color:#1e7e44">▼</div></div>'+
+        '</div>'+
+        '<div id="fd-rt-'+pfx+'" style="display:none;margin-top:5px;border-top:.5px solid #a9dfbf;padding-top:5px">'+
+          fiRt.map(function(f){var m=(f.detail||'').match(/(\d+) hari/);var nm=f.detail.split(' · ')[0];var luar=f.detail.indexOf('Luar Sumbar')!==-1;return'<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;border-bottom:.5px dashed #a9dfbf"><div><div style="font-weight:600">'+nm+'</div><div style="color:var(--mt)">'+f.tgl+' · '+(m?m[1]:0)+' hari'+(luar?' · Luar Sumbar':'')+'</div></div><span style="font-weight:600;color:#1e7e44">'+fmtRp(f.jumlah)+'</span></div>';}).join('')+
+        '</div></div>':'';
+      fe.innerHTML='<div class="fee-box"><div class="fee-title">Rincian Fee '+judulBln+' (klik untuk detail)</div>'+tvH+rtH+'<div class="fee-total"><span>Total Fee</span><span>'+fmtRp(fee)+'</span></div></div>';
+    }
     var rw=GAJI_RW.filter(function(g){return g.driver===drv;});
     document.getElementById('grw-'+pfx).innerHTML=rw.length?rw.slice(0,5).map(function(g){return'<div class="gaji-rw-item"><span style="color:var(--mt)">'+g.tgl+' · '+g.keterangan+'</span><span style="font-weight:700;color:var(--sc)">'+fmtRp(g.jumlah)+'</span></div>';}).join(''):'<div style="font-size:10px;color:var(--mt);text-align:center;padding:5px">Belum ada riwayat.</div>';
   });
@@ -1258,7 +1398,7 @@ function renderLaporan(){
   document.getElementById('lap-laba').textContent=fmtRp(laba);document.getElementById('lap-total').textContent=fmtRp(pend);document.getElementById('lap-biaya-tot').textContent=fmtRp(biaya);document.getElementById('lap-setor').textContent=fmtRp(setor);document.getElementById('lap-tv').textContent=fmtRp(tv);document.getElementById('lap-rt').textContent=fmtRp(rt);document.getElementById('lap-diskon').textContent=fmtRp(diskon);document.getElementById('lap-piutang').textContent=fmtRp(piutang);
   document.getElementById('laba-box').className='laba-box '+(laba>=0?'profit':'loss');
   renderKas();
-  var days=[];for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
+  var days=[];for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);days.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));}
   var maxV=0;var dd=days.map(function(day){var tv2=DB.filter(function(p){return p.status!=='Batal'&&p.tipe==='travel'&&p.tgl===day;}).reduce(function(s,p){return s+p.total;},0);var rt2=DB.filter(function(p){return p.status!=='Batal'&&p.tipe==='rental'&&p.tgl===day;}).reduce(function(s,p){return s+p.total;},0);var st2=SETOR.filter(function(s){return s.status==='Dikonfirmasi'&&s.tgl===day;}).reduce(function(s,x){return s+x.jumlah;},0);var by2=byF.filter(function(b){return b.tgl===day;}).reduce(function(s,b){return s+b.jumlah;},0);var m=Math.max(tv2,rt2,st2,by2);if(m>maxV)maxV=m;return{day,tv:tv2,rt:rt2,st:st2,by:by2};});
   var area=document.getElementById('chart-bars');area.innerHTML='';var maxH=60;
   dd.forEach(function(d){var col=document.createElement('div');col.className='bc';var stack=document.createElement('div');stack.className='bar-stack';function bar(val,color){var b=document.createElement('div');b.className='bar-fill';b.style.background=color;b.style.height=(maxV>0?Math.max(3,Math.round((val/maxV)*maxH)):3)+'px';b.style.width='75%';return b;}if(d.by>0)stack.appendChild(bar(d.by,'var(--dn)'));if(d.st>0)stack.appendChild(bar(d.st,'var(--sc)'));if(d.rt>0)stack.appendChild(bar(d.rt,'var(--ac)'));if(d.tv>0)stack.appendChild(bar(d.tv,'var(--pr)'));col.appendChild(stack);var lbl=document.createElement('div');lbl.className='bar-lbl';lbl.textContent=d.day.slice(5).replace('-','/');col.appendChild(lbl);area.appendChild(col);});
@@ -1676,7 +1816,6 @@ function SW(name,el){document.querySelectorAll('.pg').forEach(function(p){p.clas
   if(name==='tambah'){if(!document.getElementById('f-tgl').value)document.getElementById('f-tgl').value=today;selS=[];redrawFS();cekKonflik();hitF();}
 }
 function SWN(name){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.getElementById('pg-'+name).classList.add('active');document.querySelectorAll('.tab').forEach(function(t){if(t.getAttribute('onclick')&&t.getAttribute('onclick').indexOf("'"+name+"'")!==-1)t.classList.add('active');});if(name==='pesanan')renderP();if(name==='dashboard')renderDash();if(name==='setoran')renderRekon();if(name==='laporan')renderLaporan();if(name==='armada')renderServis();if(name==='gaji')renderGaji();if(name==='kontrol')renderKontrol();if(name==='tambah'){if(!document.getElementById('f-tgl').value)document.getElementById('f-tgl').value=today;selS=[];redrawFS();cekKonflik();hitF();}if(name==='riwayat')renderRiwayatUtama('Selesai');}
-function SWN(name){
 function swType(t){var isT=t==='travel';document.getElementById('f-travel').style.display=isT?'block':'none';document.getElementById('f-rental').style.display=isT?'none':'block';document.getElementById('tb-tv').className='tbtn'+(isT?' active':'');document.getElementById('tb-rt').className='tbtn'+(!isT?' active':'');}
 function setRwFilter(f,el){
   document.querySelectorAll('#pg-riwayat .fbtn').forEach(function(b){b.classList.remove('active');});
@@ -1729,7 +1868,7 @@ function renderRiwayatUtama(filter){
 function renderAll(){renderDash();renderP();renderLaporan();renderGaji();renderRekon();updateNotifBadge();renderServisAlert();}
 
 document.getElementById('mov').addEventListener('click',function(e){if(e.target===this)closeM();});
-document.getElementById('rek-bln').value=today.slice(0,7);
+today=getToday();document.getElementById('rek-bln').value=today.slice(0,7);
 document.getElementById('b-tgl').value=today;
 document.getElementById('sim-tgl').value=today;
 document.getElementById('f-tgl').value=today;
@@ -2180,7 +2319,6 @@ function exportPDF(){
   win.document.close();
 }
 
-}
 </script>
 </body>
 </html>
