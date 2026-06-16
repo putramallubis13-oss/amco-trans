@@ -2,6 +2,12 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a3a5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HAMCO TRANS">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>HAMCO TRANS — APK Driver</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
@@ -188,6 +194,7 @@ select.fi{appearance:none}
   <div class="tab" onclick="SW('setoran',this)" style="position:relative"><i class="ti ti-cash"></i>Setoran<span id="drv-notif-setor" class="notif-badge" style="display:none">!</span></div>
   <div class="tab" onclick="SW('riwayat',this)"><i class="ti ti-history"></i>Riwayat</div>
   <div class="tab" onclick="SW('gaji',this)"><i class="ti ti-wallet"></i>Gaji</div>
+  <div class="tab" onclick="SW('kontrol',this)"><i class="ti ti-settings"></i>Kontrol</div>
 </div>
 
 <!-- JADWAL -->
@@ -300,9 +307,11 @@ select.fi{appearance:none}
     <div id="rwt-trip" onclick="swRwDrv('trip',this)" class="tab-sub-btn" style="flex:1;padding:7px;border-radius:8px;text-align:center;font-size:10px;font-weight:600;cursor:pointer;background:var(--pr);color:#fff">Trip</div>
     <div id="rwt-tv" onclick="swRwDrv('travel',this)" class="tab-sub-btn" style="flex:1;padding:7px;border-radius:8px;text-align:center;font-size:10px;font-weight:600;cursor:pointer;color:var(--mt)">Setoran Travel</div>
     <div id="rwt-rt" onclick="swRwDrv('rental',this)" class="tab-sub-btn" style="flex:1;padding:7px;border-radius:8px;text-align:center;font-size:10px;font-weight:600;cursor:pointer;color:var(--mt)">Setoran Rental</div>
+    <div id="rwt-fee" onclick="swRwDrv('fee',this)" class="tab-sub-btn" style="flex:1;padding:7px;border-radius:8px;text-align:center;font-size:10px;font-weight:600;cursor:pointer;color:var(--mt)">Riwayat Fee</div>
   </div>
   <div id="riwayat-list"></div>
   <div id="riwayat-setor-drv" style="display:none"></div>
+  <div id="riwayat-fee-drv" style="display:none"></div>
 </div>
 
 <!-- GAJI -->
@@ -337,12 +346,36 @@ select.fi{appearance:none}
   <div id="fee-detail-list"></div>
   <div class="sec">Kasbon</div>
   <div class="card" style="margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:.5px solid var(--bd)">
+      <span style="font-size:11px;font-weight:600;color:var(--mt)">Total Kasbon Aktif</span>
+      <span style="font-size:14px;font-weight:700;color:var(--warn)" id="kasbon-total-drv">Rp 0</span>
+    </div>
     <div id="kasbon-drv-list"><div style="font-size:10px;color:var(--mt);text-align:center;padding:8px">Belum ada kasbon.</div></div>
   </div>
   <div class="sec">Riwayat Pembayaran Gaji</div>
   <div id="gaji-rw-list"></div>
 </div>
 </div>
+<!-- KONTROL -->
+<div id="pg-kontrol" class="pg">
+  <div class="sec">Ganti PIN</div>
+  <div class="card">
+    <div class="fg"><div class="fl">PIN Lama</div><input class="fi" type="password" inputmode="numeric" maxlength="4" id="k-pin-lama" placeholder="••••"></div>
+    <div class="fg"><div class="fl">PIN Baru</div><input class="fi" type="password" inputmode="numeric" maxlength="4" id="k-pin-baru" placeholder="••••"></div>
+    <div class="fg"><div class="fl">Konfirmasi PIN Baru</div><input class="fi" type="password" inputmode="numeric" maxlength="4" id="k-pin-konfirm" placeholder="••••"></div>
+    <div id="k-pin-err" style="font-size:11px;color:var(--dn);margin-bottom:8px;min-height:16px"></div>
+    <button class="btn-pr" onclick="gantiPinDrv()">Simpan PIN Baru</button>
+  </div>
+  <div class="sec">Informasi</div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:.5px solid var(--bd)"><span style="font-size:11px;color:var(--mt)">Driver</span><span style="font-size:11px;font-weight:600" id="k-nama-drv">-</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="font-size:11px;color:var(--mt)">Armada</span><span style="font-size:11px;font-weight:600" id="k-armada-drv">-</span></div>
+  </div>
+  <div style="margin-top:16px">
+    <button onclick="logout()" style="width:100%;padding:11px;background:#fdecea;color:var(--dn);border:.5px solid #f5b7b1;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer"><i class="ti ti-logout"></i> Keluar</button>
+  </div>
+</div>
+
 <div class="toast" id="tst"></div>
 
 <script>
@@ -437,7 +470,28 @@ var sb={
   }
 };
 
-const DRIVERS={'2222':{nama:'Zakaria',armada:'Hiace 8 Kursi · AB 7845 HH',warna:'bn-zk'},'1111':{nama:'Rahmat Hidayat',armada:'Hiace 9 Kursi · AB 7167 BE',warna:'bn-rh'}};
+var DRIVERS={'2222':{nama:'Zakaria',pin:'2222',armada:'Hiace 8 Kursi · AB 7845 HH',warna:'bn-zk'},'1111':{nama:'Rahmat Hidayat',pin:'1111',armada:'Hiace 9 Kursi · AB 7167 BE',warna:'bn-rh'}};
+/* Load PIN terbaru dari Supabase */
+function loadDriverPins(){
+  sbReq('GET','driver_pins','',null,function(e,data){
+    if(e||!data)return;
+    try{
+      var pins=JSON.parse(data);
+      pins.forEach(function(p){
+        /* Update DRIVERS map dengan PIN terbaru */
+        Object.keys(DRIVERS).forEach(function(key){
+          if(DRIVERS[key].nama===p.driver){
+            /* Hapus key lama, tambah key baru */
+            var d=DRIVERS[key];
+            d.pin=p.pin;
+            delete DRIVERS[key];
+            DRIVERS[p.pin]=d;
+          }
+        });
+      });
+    }catch(e){console.error('Gagal load PIN:',e);}
+  });
+}
 var curDrv=null,pinVal='';
 var DB=[],SETOR=[],FEE_LOG=[],GAJI_COMP={},GAJI_RW=[],KASBON=[];
 var KCTR=1;
@@ -506,9 +560,12 @@ function groupTravel(pesanan){
 function pinI(d){if(pinVal.length>=4)return;pinVal+=d;updDots();if(pinVal.length===4)setTimeout(checkPin,200);}
 function pinD(){pinVal=pinVal.slice(0,-1);updDots();}
 function updDots(){for(var i=0;i<4;i++)document.getElementById('d'+i).className='pin-dot'+(i<pinVal.length?' filled':'');}
+/* Load PIN terbaru saat halaman dibuka */
+setTimeout(function(){loadDriverPins();},500);
 function checkPin(){
   if(DRIVERS[pinVal]){
     curDrv=DRIVERS[pinVal];
+    curDrv.pin=pinVal;
     document.getElementById('pin-screen').classList.add('h');
     document.getElementById('drv-chip').textContent=curDrv.nama;
     document.getElementById('drv-nama').textContent=curDrv.nama;
@@ -570,7 +627,7 @@ function setupRT(){
   /* Auto refresh setiap 15 detik */
   setInterval(function(){
     if(curDrv&&document.visibilityState!=='hidden')loadAll();
-  },30000);
+  },15000);
 }
 
 /* ── STATUS — update semua pesanan dalam grup ── */
@@ -638,8 +695,8 @@ function renderJadwal(){
   var aktif=todayP.filter(function(p){return p.status==='Menunggu'||p.status==='Jalan';}).length;
   var selesai=todayP.filter(function(p){return p.status==='Selesai';}).length;
   var totH=todayP.reduce(function(s,p){return s+p.total;},0);
-  var fH=FEE_LOG.filter(function(f){return f.tgl===today;}).reduce(function(s,f){return s+f.jumlah;},0);
-  var fT=FEE_LOG.reduce(function(s,f){return s+f.jumlah;},0);
+  var fH=FEE_LOG.filter(function(f){return f.tgl===today&&!f.paid;}).reduce(function(s,f){return s+f.jumlah;},0);
+  var fT=FEE_LOG.filter(function(f){return!f.paid;}).reduce(function(s,f){return s+f.jumlah;},0);
 
   document.getElementById('jdw-cnt').textContent=travelGroups.length+rentalToday.length;
   document.getElementById('jdw-total').textContent=fmtRp(totH);
@@ -1176,33 +1233,86 @@ function renderRiwayat(){
 
 /* ── RENDER GAJI ── */
 function toggleFeeDetail(id){var el=document.getElementById(id);if(el)el.style.display=el.style.display==='none'?'block':'none';}
+function renderKontrolDrv(){
+  var nm=document.getElementById('k-nama-drv');
+  var ar=document.getElementById('k-armada-drv');
+  if(nm)nm.textContent=curDrv.nama||'-';
+  if(ar)ar.textContent=curDrv.armada||'-';
+}
+
+async function gantiPinDrv(){
+  var lama=document.getElementById('k-pin-lama').value;
+  var baru=document.getElementById('k-pin-baru').value;
+  var konfirm=document.getElementById('k-pin-konfirm').value;
+  var errEl=document.getElementById('k-pin-err');
+  errEl.textContent='';
+  if(!lama||!baru||!konfirm){errEl.textContent='Isi semua field';return;}
+  if(lama!==curDrv.pin){errEl.textContent='PIN lama salah';return;}
+  if(baru.length<4){errEl.textContent='PIN minimal 4 digit';return;}
+  if(!/^\d+$/.test(baru)){errEl.textContent='PIN hanya angka';return;}
+  if(baru!==konfirm){errEl.textContent='Konfirmasi PIN tidak cocok';return;}
+  if(DRIVERS[baru]&&DRIVERS[baru].nama!==curDrv.nama){errEl.textContent='PIN sudah dipakai driver lain';return;}
+  /* Update di Supabase */
+  sbReq('PATCH','driver_pins','driver=eq.'+encodeURIComponent(curDrv.nama),{pin:baru},function(e){
+    if(e){T('Gagal simpan PIN','err');return;}
+    /* Update DRIVERS map lokal */
+    var pinLama=curDrv.pin;
+    var d=DRIVERS[pinLama];
+    d.pin=baru;
+    delete DRIVERS[pinLama];
+    DRIVERS[baru]=d;
+    curDrv.pin=baru;
+    document.getElementById('k-pin-lama').value='';
+    document.getElementById('k-pin-baru').value='';
+    document.getElementById('k-pin-konfirm').value='';
+    T('PIN berhasil diubah!');
+  });
+}
+
 function renderGaji(){
-  var feeTv=FEE_LOG.filter(function(f){return f.tipe==='travel';}).reduce(function(s,f){return s+f.jumlah;},0);
-  var feeRt=FEE_LOG.filter(function(f){return f.tipe==='rental';}).reduce(function(s,f){return s+f.jumlah;},0);
+  var feeTv=FEE_LOG.filter(function(f){return f.tipe==='travel'&&!f.paid;}).reduce(function(s,f){return s+f.jumlah;},0);
+  var feeRt=FEE_LOG.filter(function(f){return f.tipe==='rental'&&!f.paid;}).reduce(function(s,f){return s+f.jumlah;},0);
   var fee=feeTv+feeRt;
-  var pokok=GAJI_COMP.pokok||0,potongan=GAJI_COMP.potongan||0,dibayar=GAJI_COMP.dibayar||0;
-  var totalKasbon=KASBON.reduce(function(s,k){return s+k.jumlah;},0);
+  var pokok=GAJI_COMP.pokok||0,potongan=GAJI_COMP.potongan||0;
   var bpjs=GAJI_COMP.bpjs||0,angsuran=GAJI_COMP.angsuran||0;
-  var net=pokok+fee-potongan-bpjs-angsuran-totalKasbon,sisa=Math.max(0,net-dibayar);
-  document.getElementById('gaji-total').textContent=fmtRp(net);
+
+  /* Tanggal gaji terakhir dibayar */
+  var lastGajiTgl=GAJI_RW.length?GAJI_RW.slice().sort(function(a,b){return b.tgl>a.tgl?1:-1;})[0].tgl:'';
+
+  /* Kasbon hanya yang setelah gaji terakhir dibayar */
+  var lastGajiTSD=lastGajiTgl?(GAJI_RW.find(function(g){return g.tgl===lastGajiTgl;})?.created_at||lastGajiTgl):'';
+  var kasbonAktif=KASBON.filter(function(k){
+    if(!lastGajiTgl)return true;
+    if(k.tgl===lastGajiTgl&&lastGajiTSD){return(k.created_at||k.tgl)>=lastGajiTSD;}
+    return k.tgl>lastGajiTgl;
+  });
+  var totalKasbon=kasbonAktif.reduce(function(s,k){return s+k.jumlah;},0);
+
+  /* Gaji yang sudah dibayar hanya setelah gaji terakhir - kalau sudah lunas = 0 */
+  var dibayar=GAJI_COMP.dibayar||0;
+  var net=pokok+fee-potongan-bpjs-angsuran-totalKasbon;
+  var sisa=Math.max(0,net-dibayar);
+  /* Kalau fee = 0 dan kasbon = 0, berarti gaji sudah dibayar - reset tampilan */
+  var sudahLunas=fee===0&&sisa===0&&dibayar>0;
+
+  document.getElementById('gaji-total').textContent=fmtRp(sudahLunas?0:net);
   document.getElementById('gaji-pokok').textContent=fmtRp(pokok);
   document.getElementById('gaji-fee').textContent=fmtRp(fee);
   document.getElementById('g-pokok').textContent=fmtRp(pokok);
   document.getElementById('g-fee-tv').textContent=fmtRp(feeTv);
   document.getElementById('g-fee-rt').textContent=fmtRp(feeRt);
-  var bpjs=GAJI_COMP.bpjs||0,angsuran=GAJI_COMP.angsuran||0;
   document.getElementById('g-pot').textContent=fmtRp(potongan);
   var bEl=document.getElementById('g-bpjs');if(bEl)bEl.textContent=fmtRp(bpjs);
   var aEl=document.getElementById('g-angsuran');if(aEl)aEl.textContent=fmtRp(angsuran);
   document.getElementById('g-kasbon').textContent=fmtRp(totalKasbon);
-  document.getElementById('g-total').textContent=fmtRp(net);
-  document.getElementById('g-bayar').textContent=fmtRp(dibayar);
-  document.getElementById('g-sisa').textContent=fmtRp(sisa);
+  document.getElementById('g-total').textContent=fmtRp(sudahLunas?0:net);
+  document.getElementById('g-bayar').textContent=fmtRp(sudahLunas?0:dibayar);
+  document.getElementById('g-sisa').textContent=sudahLunas?'Lunas ✓':fmtRp(sisa);
   document.getElementById('g-sisa').style.color=sisa===0?'var(--sc)':'var(--dn)';
   var fdEl=document.getElementById('fee-detail-list');
-  var feeTvItems=FEE_LOG.filter(function(f){return f.tipe==='travel';});
-  var feeRtItems=FEE_LOG.filter(function(f){return f.tipe==='rental';});
-  if(!FEE_LOG.length){
+  var feeTvItems=FEE_LOG.filter(function(f){return f.tipe==='travel'&&!f.paid;});
+  var feeRtItems=FEE_LOG.filter(function(f){return f.tipe==='rental'&&!f.paid;});
+  if(!feeTvItems.length&&!feeRtItems.length){
     fdEl.innerHTML='<div class="kosong"><i class="ti ti-cash"></i><div style="font-size:11px">Fee muncul otomatis setelah setoran dikonfirmasi admin.</div></div>';
   }else{
     /* Travel: total penumpang saja */
@@ -1235,7 +1345,7 @@ function renderGaji(){
 
     var rtHtml=feeRtItems.length?
       '<div style="background:#eafaf1;border-radius:8px;padding:8px 10px;margin-bottom:6px">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center" onclick="toggleFeeDetail(\'rt-detail\')" style="cursor:pointer">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleFeeDetail(\'rt-detail\')">'+
           '<div>'+
             '<span style="background:#1e7e44;color:#fff;padding:1px 7px;border-radius:8px;font-size:9px;font-weight:700">RENTAL</span>'+
             '<div style="font-size:11px;font-weight:600;margin-top:3px">'+rtTotalHari+' total hari · '+feeRtItems.length+' trip</div>'+
@@ -1248,8 +1358,8 @@ function renderGaji(){
         '<div id="rt-detail" style="display:none;margin-top:6px;border-top:.5px solid #a9dfbf;padding-top:6px">'+
           feeRtItems.map(function(f){
             var m=(f.detail||'').match(/(\d+) hari/);var hari=m?parseInt(m[1]):0;
-            var nm=f.detail.split(' · ')[0]||'';
-            var luar=f.detail.indexOf('Luar Sumbar')!==-1;
+            var nm=(f.detail||'').split(' · ')[0]||f.tgl||'Rental';
+            var luar=(f.detail||'').indexOf('Luar Sumbar')!==-1;
             return'<div style="display:flex;justify-content:space-between;font-size:10px;padding:3px 0;border-bottom:.5px dashed #a9dfbf">'+
               '<div><div style="font-weight:600">'+nm+'</div>'+
               '<div style="color:var(--mt)">'+f.tgl+' · '+hari+' hari'+(luar?' · Luar Sumbar':'')+'</div></div>'+
@@ -1267,9 +1377,11 @@ function renderGaji(){
   }
   /* Riwayat kasbon - readonly untuk driver */
   var kbEl=document.getElementById('kasbon-drv-list');
+  var kbTot=document.getElementById('kasbon-total-drv');
+  if(kbTot)kbTot.textContent=fmtRp(totalKasbon);
   if(kbEl){
-    kbEl.innerHTML=KASBON.length?
-      KASBON.map(function(k){
+    kbEl.innerHTML=kasbonAktif.length?
+      kasbonAktif.map(function(k){
         return'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:.5px solid var(--bd)">'+
           '<div><div style="font-size:11px;font-weight:600;color:var(--warn)">'+fmtRp(k.jumlah)+'</div>'+
           '<div style="font-size:9px;color:var(--mt)">'+k.tgl+' · '+k.keterangan+'</div></div>'+
@@ -1294,6 +1406,8 @@ function SW(name,el){
   document.getElementById('pg-'+name).classList.add('active');
   el.classList.add('active');
   if(name==='setoran'){loadPesananTravel();renderRentalList();}
+  if(name==='gaji'){renderGaji();}
+  if(name==='kontrol'){renderKontrolDrv();}
   if(name==='riwayat'){renderRiwayat();if(curRwDrv!=='trip')renderRwSetorDrv(curRwDrv);}
 }
 
@@ -1305,8 +1419,10 @@ function swRwDrv(tab,el){
   });
   el.style.background='var(--pr)';el.style.color='#fff';
   document.getElementById('riwayat-list').style.display=tab==='trip'?'block':'none';
-  document.getElementById('riwayat-setor-drv').style.display=tab!=='trip'?'block':'none';
-  if(tab!=='trip')renderRwSetorDrv(tab);
+  document.getElementById('riwayat-setor-drv').style.display=(tab==='travel'||tab==='rental')?'block':'none';
+  document.getElementById('riwayat-fee-drv').style.display=tab==='fee'?'block':'none';
+  if(tab==='travel'||tab==='rental')renderRwSetorDrv(tab);
+  if(tab==='fee')renderRwFee();
 }
 
 function renderRwSetorDrv(tipe){
@@ -1339,10 +1455,67 @@ function renderRwSetorDrv(tipe){
   }).join('');
 }
 
+function renderRwFee(){
+  var el=document.getElementById('riwayat-fee-drv');if(!el)return;
+  var feePaid=FEE_LOG.filter(function(f){return f.paid;});
+  if(!feePaid.length){
+    el.innerHTML='<div class="kosong"><i class="ti ti-cash"></i><div style="font-size:11px">Belum ada riwayat fee yang dibayar.</div></div>';
+    return;
+  }
+  /* Kelompokkan per tanggal gaji dibayar */
+  var gajiDates=GAJI_RW.filter(function(g){return g.driver===curDrv.nama;}).map(function(g){return g.tgl;}).sort().reverse();
+  var html='';
+  gajiDates.forEach(function(tglGaji,idx){
+    var tglSebelumnya=gajiDates[idx+1]||'2000-01-01';
+    var feeGrp=feePaid.filter(function(f){return f.tgl>tglSebelumnya&&f.tgl<=tglGaji;});
+    if(!feeGrp.length)return;
+    var tvFee=feeGrp.filter(function(f){return f.tipe==='travel';}).reduce(function(s,f){return s+f.jumlah;},0);
+    var rtFee=feeGrp.filter(function(f){return f.tipe==='rental';}).reduce(function(s,f){return s+f.jumlah;},0);
+    var tot=tvFee+rtFee;
+    var gajiJml=GAJI_RW.find(function(g){return g.driver===curDrv.nama&&g.tgl===tglGaji;});
+    html+='<div style="background:var(--cd);border-radius:11px;border:.5px solid var(--bd);margin-bottom:9px;overflow:hidden">'+
+      '<div style="background:var(--pr);padding:10px 13px;display:flex;justify-content:space-between;align-items:center">'+
+        '<div><div style="font-size:11px;font-weight:700;color:#fff">Gaji Dibayar: '+tglGaji+'</div>'+
+        '<div style="font-size:9px;color:rgba(255,255,255,.6)">'+feeGrp.length+' trip/setoran dikonfirmasi</div></div>'+
+        '<div style="text-align:right"><div style="font-size:14px;font-weight:700;color:var(--ac)">'+fmtRp(tot)+'</div>'+
+        (gajiJml?'<div style="font-size:9px;color:rgba(255,255,255,.6)">Gaji: '+fmtRp(gajiJml.jumlah)+'</div>':'')+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:9px 13px">'+
+        (tvFee?'<div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:.5px solid var(--bd)"><span style="color:#1a6fa0">🚌 Fee Travel</span><span style="font-weight:600;color:#1a6fa0">'+fmtRp(tvFee)+'</span></div>':'')+
+        (rtFee?'<div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:.5px solid var(--bd)"><span style="color:#1e7e44">🚗 Fee Rental</span><span style="font-weight:600;color:#1e7e44">'+fmtRp(rtFee)+'</span></div>':'')+
+        '<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;padding-top:6px;margin-top:3px"><span>Total Fee Periode Ini</span><span style="color:var(--pr)">'+fmtRp(tot)+'</span></div>'+
+      '</div>'+
+    '</div>';
+  });
+  /* Fee yang belum ada tanggal gaji (belum dibayar tapi paid=true karena manual) */
+  var feeOrphan=feePaid.filter(function(f){
+    return !gajiDates.some(function(tgl){return f.tgl<=tgl;});
+  });
+  if(feeOrphan.length){
+    html+='<div style="background:#fef9e7;border:.5px solid #f0c040;border-radius:9px;padding:9px 12px;margin-bottom:7px">'+
+      '<div style="font-size:10px;font-weight:600;color:#9a6b0a;margin-bottom:5px">Fee Lainnya</div>'+
+      feeOrphan.map(function(f){return'<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0"><span>'+f.tgl+' · '+(f.detail||f.tipe)+'</span><span style="font-weight:600">'+fmtRp(f.jumlah)+'</span></div>';}).join('')+
+    '</div>';
+  }
+  el.innerHTML=html||'<div class="kosong"><i class="ti ti-cash"></i><div>Tidak ada data fee.</div></div>';
+}
+
 function renderAll(){renderJadwal();renderSetoran();renderRiwayat();renderGaji();updateDrvNotif();}
 
 mkBiayaRow('tv-biaya-list',tvBiayaRows,hitSetorTravel);
 mkBiayaRow('rt-biaya-list',rtBiayaRows,hitSetorRental);
+
+/* Register Service Worker */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      console.log('SW registered');
+    }).catch(function(e){
+      console.log('SW error:',e);
+    });
+  });
+}
 </script>
 </body>
 </html>
